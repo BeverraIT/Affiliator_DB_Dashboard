@@ -172,6 +172,17 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- FILTER TANPA WHATSAPP --}}
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label small text-muted fw-bold text-uppercase mb-1">WhatsApp</label>
+                                    <div class="form-control form-control-sm d-flex align-items-center justify-content-between" style="height: 31px;">
+                                        <label class="form-check-label small text-secondary" for="filterNoWa">Belum Ada WA</label>
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="filterNoWa" name="filter_no_wa" value="1" {{ request('filter_no_wa') ? 'checked' : '' }}>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

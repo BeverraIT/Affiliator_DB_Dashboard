@@ -29,11 +29,12 @@ class CreatorController extends Controller
         $filter_umur        = $request->query('filter_umur', []);
         $filter_kategori    = $request->query('filter_kategori', []);
         $filter_style       = $request->query('filter_style', []);
+        $filter_no_wa       = $request->query('filter_no_wa');
         $min_gmv            = $request->query('min_gmv');
         $max_gmv            = $request->query('max_gmv');
 
         // SORTING
-        $sort = (string) $request->query('sort', 'username');
+        $sort = (string) $request->query('sort', 'id');
         $dir = strtolower((string) $request->query('dir', 'desc')) == 'asc' ? 'asc' : 'desc';
         $allowedSort = [
             'id',
@@ -43,6 +44,7 @@ class CreatorController extends Controller
             'channel',
             'genderpengikut',
         ];
+
         if(!in_array($sort, $allowedSort, true)) {
             $sort = 'username';
         }
@@ -97,6 +99,11 @@ class CreatorController extends Controller
             $query->where('is_blocked', 1);
         }
 
+        // Filter Tanpa WA
+        $query->when($filter_no_wa, function ($q) {
+            $q->whereNull('nomerwa');
+        });
+
         // SEARCH & SORTING
         $creators = $query->search($q)
             ->orderBy($sort, $dir)
@@ -121,6 +128,7 @@ class CreatorController extends Controller
             'filter_umur',
             'filter_kategori',
             'filter_style',
+            'filter_no_wa',
             'min_gmv',
             'max_gmv',
         ));
