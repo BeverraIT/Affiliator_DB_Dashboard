@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\ContentStyle;
 use App\Models\Creator;
 use App\Models\Age;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +31,7 @@ class CreatorController extends Controller
         $filter_kategori    = $request->query('filter_kategori', []);
         $filter_style       = $request->query('filter_style', []);
         $filter_no_wa       = $request->query('filter_no_wa');
+        $filter_user        = $request->query('filter_user', []);
         $min_gmv            = $request->query('min_gmv');
         $max_gmv            = $request->query('max_gmv');
 
@@ -79,6 +81,11 @@ class CreatorController extends Controller
             });
         }
 
+        // Filter User
+        if (!empty($filter_user)) {
+            $query->whereIn('user_id', $filter_user);
+        }
+
         // Filter GMV Range
         $query->when($min_gmv, function ($q) use ($min_gmv) {
             $cleanMin = preg_replace('/[^0-9]/', '', $min_gmv);
@@ -117,6 +124,7 @@ class CreatorController extends Controller
         $ageOptions      = Age::orderBy('name')->get(); 
         $categoryOptions = Category::orderBy('name')->get();
         $styleOptions    = ContentStyle::orderBy('name')->get();
+        $userOptions     = User::orderBy('name')->get();
 
         return view('admin.kreator.index', compact(
             'creators', 
@@ -126,6 +134,7 @@ class CreatorController extends Controller
             'ageOptions',
             'categoryOptions',
             'styleOptions',
+            'userOptions',
             'filter_umur',
             'filter_kategori',
             'filter_style',

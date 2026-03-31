@@ -183,6 +183,18 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- FILTER USER (PENGINPUT) --}}
+                                <div class="col-12 col-md-6">
+                                    <label for="filterUser" class="form-label small text-muted fw-bold text-uppercase mb-1">Input Oleh</label>
+                                    <select class="form-select form-select-sm select2-init" id="filterUser" name="filter_user[]" multiple="multiple" style="width: 100%">
+                                        @foreach($userOptions as $user)
+                                            <option value="{{ $user->id }}" {{ in_array($user->id, $filter_user ?? []) ? 'selected' : '' }}>
+                                                {{ $user->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
