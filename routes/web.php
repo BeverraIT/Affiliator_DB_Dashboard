@@ -43,32 +43,16 @@ Route::middleware(['auth'])->group(function () {
             ->name('kirim-sampel.destroy');
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard.index');
-    });
 
-
-    Route::get('/follow-up-pengiriman', [FollowUpPengirimanController::class, 'index'])
-        ->name('admin.followup.pengiriman.index');
-    Route::put('/follow-up-pengiriman/{sendSample}', [FollowUpPengirimanController::class, 'update'])
-        ->name('admin.followup.pengiriman.update');
-
-
-    Route::get('/followup-chat', [KirimSampelController::class, 'followUpChat'])
-        ->name('admin.followup.chat.index');
-    Route::post('/followup-chat/{sendSample}/chat-status', [KirimSampelController::class, 'chatStatus'])
-        ->name('admin.followup.chat.chatStatus');
-
-
-    Route::prefix('admin')->name('admin.')->group(function () {
+            
         Route::get('/follow-up-konten', [FollowUpKontenController::class, 'index'])
             ->name('followup_konten.index');
         Route::post('/follow-up-konten/{sendSample}/video-dibuat', [FollowUpKontenController::class, 'storeVideoDibuat'])
             ->name('followup_konten.video_dibuat');
         Route::post('/followup-konten/{sendSample}/mark-mingguan', [FollowUpKontenController::class, 'markFollowUpMingguan'])
             ->name('followup_konten.mark_mingguan');
-    });
 
 
-    Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/kreator/bulk-destroy', [CreatorController::class, 'bulkDestroy'])
             ->name('kreator.bulk_destroy');
         Route::post('/kreator/import', [CreatorController::class, 'import'])
@@ -114,4 +98,16 @@ Route::middleware(['auth'])->group(function () {
             ->name('users.bulk_destroy');
         Route::resource('users', UserController::class);
     });
+
+
+    Route::get('/follow-up-pengiriman', [FollowUpPengirimanController::class, 'index'])
+        ->name('admin.followup.pengiriman.index');
+    Route::put('/follow-up-pengiriman/{sendSample}', [FollowUpPengirimanController::class, 'update'])
+        ->name('admin.followup.pengiriman.update');
+
+
+    Route::get('/followup-chat', [KirimSampelController::class, 'followUpChat'])
+        ->name('admin.followup.chat.index');
+    Route::post('/followup-chat/{sendSample}/chat-status', [KirimSampelController::class, 'chatStatus'])
+        ->name('admin.followup.chat.chatStatus');
 });
