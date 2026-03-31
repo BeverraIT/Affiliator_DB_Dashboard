@@ -299,6 +299,10 @@
                                     @if((int)$creator->is_blocked === 1)
                                         <span class="badge bg-danger ms-1" title="Kreator ini telah diblokir">Diblokir</span>
                                     @endif
+
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        Input oleh: {{ $creator->user->name ?? '-' }}
+                                    </div>
                                 </div>
 
 

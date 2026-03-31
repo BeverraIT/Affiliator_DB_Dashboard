@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Creator extends Model
 {
     protected $fillable = [
+        'user_id',
         'username',
         'channel',
         'gmv',
@@ -18,6 +20,11 @@ class Creator extends Model
         'top_creator',
         'is_blocked',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function contentStyles(): BelongsToMany
     {

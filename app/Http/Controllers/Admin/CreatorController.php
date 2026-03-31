@@ -52,6 +52,7 @@ class CreatorController extends Controller
         // QUERY
         $query = Creator::query()
             ->with([
+                'user:id,name',
                 'contentStyles:id,name',
                 'categories:id,name',
                 'ages:id,name',
@@ -153,12 +154,10 @@ class CreatorController extends Controller
     {
         $validated = $request->safe();
         DB::transaction(function () use ($validated) {
-            $creator = Creator::create(
-                $validated->except([
-                    'ages',
-                    'categories',
-                    'contentstyles'
-            ]));
+            $data = $validated->collect()->except(['ages', 'categories', 'contentstyles']);
+            $data['user_id'] = auth()->id();
+
+            $creator = Creator::create($data->all());
             $creator->ages()->sync($validated->collect('ages'));
             $creator->categories()->sync($validated->collect('categories'));
             $creator->contentStyles()->sync($validated->collect('contentstyles'));
