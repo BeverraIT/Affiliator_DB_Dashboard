@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreCreatorRequest;
 use App\Http\Requests\UpdateCreatorRequest;
+use App\Http\Requests\CheckUsernameRequest;
 use App\Imports\CreatorsImport;
 use App\Exports\CreatorsExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -304,13 +305,24 @@ class CreatorController extends Controller
         return redirect()->back()->with('success', 'Kreator berhasil diblokir.');
     }
 
-    public function checkUsername(Request $request)
+    public function checkUsername(CheckUsernameRequest $request)
     {
-        $exists = Creator::where('username', $request->username)->exists();
-        
-        return response()->json([
-            'exists' => $exists
-        ]);
+        try {
+            $exists = Creator::where('username', $request->username)->exists();
+            
+            return response()->json([
+                'success' => true,
+                'exists'  => $exists
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error saat checkUsername: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada server saat memvalidasi username. Silakan coba lagi.'
+            ], 500);
+        }
     }
 
     public function autoFill(Request $request)

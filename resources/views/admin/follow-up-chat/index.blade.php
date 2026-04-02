@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Follow Up Konten')
+@section('title', 'Follow Up Chat')
 
 @section('content')
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
