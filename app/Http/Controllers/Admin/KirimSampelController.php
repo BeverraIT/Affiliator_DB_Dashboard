@@ -305,10 +305,10 @@ class KirimSampelController extends Controller
     public function followUpChat(Request $request)
     {
         // INPUT REQUEST
-        $search     = trim((string) $request->get('q', ''));
-        $sku_utama  = $request->get('sku_utama');
-        $startDate  = $request->get('start_date');
-        $endDate    = $request->get('end_date');
+        $search     = trim((string) $request->input('q', ''));
+        $sku_utama  = $request->input('sku_utama');
+        $startDate  = $request->input('start_date');
+        $endDate    = $request->input('end_date');
         $user       = Auth::user();
 
         // QUERY
