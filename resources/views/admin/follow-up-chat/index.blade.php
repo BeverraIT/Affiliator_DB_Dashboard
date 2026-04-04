@@ -143,6 +143,9 @@
                                     <span class="badge bg-light text-muted border">PIC: -</span>
                                 </div>
                             @endif
+                            <div class="fw-small text-secondary mt-1">
+                                Tanggal Aktual: {{ $item->tanggal_aktual ? \Carbon\Carbon::parse($item->tanggal_aktual)->translatedFormat('d M Y') : '-' }}
+                            </div>
                         </td>
 
                         <td>

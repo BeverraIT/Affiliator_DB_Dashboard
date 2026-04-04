@@ -21,7 +21,6 @@ class CreatorsImport implements OnEachRow, WithHeadingRow, WithValidation
                 $row[$key] = preg_replace('/\s+/', ' ', trim($value));
             }
         }
-        // ----------------------------------------------------------------
 
         if (Creator::where('username', $row['username'])->exists()) {
             return;

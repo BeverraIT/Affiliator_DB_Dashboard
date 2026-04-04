@@ -316,7 +316,7 @@ class KirimSampelController extends Controller
             'creator',
             'store',
             'product',
-            'user'
+            'user',
         ]);
 
         // FILTER ROLE
