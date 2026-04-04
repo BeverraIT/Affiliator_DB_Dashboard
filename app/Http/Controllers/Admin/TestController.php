@@ -83,10 +83,13 @@ class TestController extends Controller
 
     public function checkUsername(Request $request)
     {
-        $exists = Creator::where('username', $request->username)->exists();
-
-        return response()->json([
-            'exists' => $exists
+        $request->validate([
+            'username' => 'required|string|max:255',
         ]);
+
+        $username   = $request->input('username');
+        $exists     = Test::where('username', $username)->exists();
+
+        return response()->json(['exists' => $exists]);
     }
 }

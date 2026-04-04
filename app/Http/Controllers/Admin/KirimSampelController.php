@@ -34,20 +34,18 @@ class KirimSampelController extends Controller
         $filter_id_pesanan  = $request->get('filter_id_pesanan');
         $filter_status_chat = $request->get('filter_status_chat');
 
-        // SORTING
         $allowedSort = [
             'deal_date',
             'tanggal_kirim',
             'estimasi_sampai',
             'tanggal_aktual',
             'qty',
-            'id'
+            'id',
         ];
         $sort = $request->get('sort', 'deal_date');
         $sort = in_array($sort, $allowedSort, true) ? $sort : 'deal_date';
         $dir = $request->get('dir', 'desc') === 'asc' ? 'asc' : 'desc';
 
-        // QUERY
         $query = SendSample::query()
             ->select([
                 'id',
@@ -72,13 +70,11 @@ class KirimSampelController extends Controller
                 'product:id,sku,sku_utama,harga',
             ]);
 
-        // Role
         $user = Auth::user();
         if ($user && $user->role !== 'super admin') {
             $query->where('pic', $user->id);
         }
 
-        // Filter Tanggal
         $query->when($request->start_date, function ($q) use ($request) {
             $q->whereDate('tanggal_kirim', '>=', $request->start_date);
         });
@@ -224,7 +220,7 @@ class KirimSampelController extends Controller
             'creators',
             'stores',
             'products',
-            'users'
+            'users',
         ));
     }
 
@@ -393,7 +389,7 @@ class KirimSampelController extends Controller
     }
 
 
-    public function export(Request $request) 
+    public function export(Request $request)
     {
         $columns = [
             'deal_date',

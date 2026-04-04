@@ -223,7 +223,6 @@
             <table class="table table-hover align-middle mb-0 small table-sm">
                 <thead class="table-light align-middle">
                     <tr class="text-center">
-                        {{-- CHECKBOX --}}
                         <th style="width: 40px;">
                             <div class="form-check d-flex justify-content-center">
                                 <input class="form-check-input" type="checkbox" id="checkAll">
@@ -242,22 +241,21 @@
                 <tbody id="sampleTableBody">
                 @forelse($sendSamples as $i => $row)
                     @php
-                        $hargaProduk = (int) ($row->product->harga ?? 0);
-                        $qty = (int) ($row->qty ?? 0);
-                        $totalHarga = $hargaProduk * $qty;
+                        $hargaProduk    = (int) ($row->product->harga ?? 0);
+                        $qty            = (int) ($row->qty ?? 0);
+                        $totalHarga     = $hargaProduk * $qty;
 
-                        $tglDealShow = optional($row->deal_date)->format('d M Y') ?? null;
-                        $tglKirimShow = optional($row->tanggal_kirim)->format('d M Y') ?? null;
-                        $tglEstimasiShow = optional($row->estimasi_sampai)->format('d M Y') ?? null;
-                        $tglAktualShow = optional($row->tanggal_aktual)->format('d M Y') ?? null;
+                        $tglDealShow    = optional($row->deal_date)->format('d M Y') ?? null;
+                        $tglKirimShow   = optional($row->tanggal_kirim)->format('d M Y') ?? null;
+                        $tglEstimasiShow= optional($row->estimasi_sampai)->format('d M Y') ?? null;
+                        $tglAktualShow  = optional($row->tanggal_aktual)->format('d M Y') ?? null;
 
-                        $perjLive = (int) ($row->perjanjian_livestream ?? 0);
-                        $perjVideo = (int) ($row->perjanjian_video ?? 0);
-
-                        $hasIdPesanan = !empty($row->id_pesanan);
-                        $idPesananVal = (string) ($row->id_pesanan ?? '');
+                        $perjLive       = (int) ($row->perjanjian_livestream ?? 0);
+                        $perjVideo      = (int) ($row->perjanjian_video ?? 0);
+                        $hasIdPesanan   = !empty($row->id_pesanan);
+                        $idPesananVal   = (string) ($row->id_pesanan ?? '');
                         
-                        $usernameVal = $row->creator->username ?? $row->creator->name ?? '-';
+                        $usernameVal    = $row->creator->username ?? $row->creator->name ?? '-';
                     @endphp
 
                     <tr>

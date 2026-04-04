@@ -13,10 +13,11 @@ use App\Http\Controllers\Admin\ContentStyleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 
-
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::controller(AuthController::class)->group(function () {
+    Route::get('/login', 'showLoginForm')->name('login');
+    Route::post('/login', 'login');
+    Route::post('/logout', 'logout')->name('logout');
+});
 
 
 Route::middleware(['auth'])->group(function () {
@@ -73,18 +74,15 @@ Route::middleware(['auth'])->group(function () {
             ->name('content-styles.bulk_destroy');
         Route::resource('content-styles', ContentStyleController::class);
 
-
         Route::delete('categories/bulk-destroy', [CategoryController::class, 'bulkDestroy'])
             ->name('category.bulk_destroy');
         Route::resource('category', CategoryController::class);
 
-
-        Route::get('product/export', [ProductController::class, 'export'])
-            ->name('product.export');
-        Route::post('/product/import', [ProductController::class, 'import'])
-            ->name('product.import');
-        Route::delete('/product/bulk-delete', [ProductController::class, 'bulkDestroy'])
-            ->name('product.bulk_destroy');
+        Rote::controller(ProductController::class)->prefix('product')->name('product.')->group(function () {
+            Route::get('/export', 'export')->name('export');
+            Route::post('/import', 'import')->name('import');
+            Route::delete('/bbulk-delete', 'bulkDestroy')->name('bulk_destroy');
+        });
         Route::resource('product', ProductController::class);
 
 
