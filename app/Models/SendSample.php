@@ -118,10 +118,19 @@ class SendSample extends Model
             ->where('status_chat', 1);
     }
 
-    public function scopeNeedChatFollowUp(Builder $query)
+    public function scopeNeedChatFollowUp(Builder $query): Builder
     {
         return $query->whereNotNull('tanggal_aktual')
             ->where('status_chat', 0);
+    }
+
+    public function scopeFollowUpChat(Builder $query)
+    {
+        return $query->whereNotNull('tanggal_aktual')
+            ->where('status_chat', 0)
+            ->orderByRaw('tanggal_aktual DESC')
+            ->orderByRaw('deal_date IS NULL, deal_date DESC')
+            ->orderByDesc('id');
     }
 
     public function scopeFilterDate($query, $start, $end, $column = 'deal_date')

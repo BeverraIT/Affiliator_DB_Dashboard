@@ -341,12 +341,8 @@ class KirimSampelController extends Controller
         });
 
         // SEARCH, SORTING, & PAGINATION
-        $items = $query->whereNotNull('tanggal_aktual')
+        $items = $query->followUpChat()
             ->search($search)
-            ->where('status_chat', 0)
-            ->orderByRaw('tanggal_aktual IS NULL, tanggal_aktual DESC')
-            ->orderByRaw('deal_date IS NULL, deal_date DESC')
-            ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
 
