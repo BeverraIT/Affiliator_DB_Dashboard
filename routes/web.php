@@ -45,13 +45,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard.index');
 
-            
+        
         Route::get('/follow-up-konten', [FollowUpKontenController::class, 'index'])
             ->name('followup_konten.index');
-        Route::post('/follow-up-konten/{sendSample}/video-dibuat', [FollowUpKontenController::class, 'storeVideoDibuat'])
-            ->name('followup_konten.video_dibuat');
-        Route::post('/followup-konten/{sendSample}/mark-mingguan', [FollowUpKontenController::class, 'markFollowUpMingguan'])
-            ->name('followup_konten.mark_mingguan');
+        Route::prefix('/follow-up-konten')->name('followup_konten.')->controller(FollowUpKontenController::class)->group(function () {
+            Route::post('/{sendSample}/video-dibuat', 'storeVideoDibuat')->name('video_dibuat');
+            Route::post('/{sendSample}/mark-mingguan', 'markFollowUpMingguan')->name('mark_mingguan');
+        });
 
 
         Route::delete('/kreator/bulk-destroy', [CreatorController::class, 'bulkDestroy'])
@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('category.bulk_destroy');
         Route::resource('category', CategoryController::class);
 
-        Rote::controller(ProductController::class)->prefix('product')->name('product.')->group(function () {
+        Route::prefix('product')->name('product.')->controller(ProductController::class)->group(function () {
             Route::get('/export', 'export')->name('export');
             Route::post('/import', 'import')->name('import');
             Route::delete('/bbulk-delete', 'bulkDestroy')->name('bulk_destroy');
