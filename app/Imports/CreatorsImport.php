@@ -16,17 +16,21 @@ class CreatorsImport implements OnEachRow, WithHeadingRow, WithValidation
     public function onRow(Row $row)
     {
         $row = $row->toArray();
-        $creator = Creator::updateOrCreate(
-            ['username' => $row['username']],
-            [
-                'channel'        => $row['channel'],
-                'gmv'            => $row['gmv'],
-                'itemsterjual'   => $row['itemsterjual'],
-                'genderpengikut' => $row['genderpengikut'],
-                'namawa'         => $row['namawa'],
-                'nomerwa'        => $row['nomerwa'],
-            ],
-        );
+
+        if (Creator::where('username', $row['username'])->exists()) {
+            return;
+        }
+
+        $creator = Creator::create([
+            'username'       => $row['username'],
+            'channel'        => $row['channel'],
+            'gmv'            => $row['gmv'],
+            'itemsterjual'   => $row['itemsterjual'],
+            'genderpengikut' => $row['genderpengikut'],
+            'namawa'         => $row['namawa'],
+            'nomerwa'        => $row['nomerwa'],
+            'user_id'        => auth()->id(),
+        ]);
 
         if (!empty($row['kategori'])) {
             $categoryNames = explode(',', $row['kategori']);

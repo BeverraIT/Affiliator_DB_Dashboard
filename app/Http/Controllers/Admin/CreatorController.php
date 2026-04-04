@@ -305,10 +305,11 @@ class CreatorController extends Controller
         return redirect()->back()->with('success', 'Kreator berhasil diblokir.');
     }
 
+    // Ini baru di refactor tapi belum di tes, jadi kemungkinan ada error. Tolong dicek lagi ya kalau mau dipakai
     public function checkUsername(CheckUsernameRequest $request)
     {
         try {
-            $exists = Creator::where('username', $request->username)->exists();
+            $exists = Creator::where('username', $request->input('username'))->exists();
             
             return response()->json([
                 'success' => true,

@@ -266,7 +266,7 @@
                     width: '100%',
                     placeholder: $(this).data('placeholder'),
                     allowClear: true,
-                    maximumSelectionLength: limit
+                    maximumSelectionLength: limit,
                 });
             });
 
@@ -276,7 +276,6 @@
                 let ajaxErrorDiv = $('#ajax-username-error');
                 let helpText = $('#username-help');
 
-                // Hapus spasi jika user tidak sengaja mengetik spasi
                 username = username.replace(/\s+/g, '');
                 inputField.val(username);
 
@@ -313,7 +312,6 @@
 
             $('#btn-autofill').click(function() {
                 let username = $('#username').val().trim();
-                
                 if (!username) {
                     alert("Mohon isi username terlebih dahulu!");
                     $('#username').focus();
@@ -335,16 +333,10 @@
                         btn.html(originalHtml).prop('disabled', false);
 
                         if (response.success) {
-                            // Update 1: Channel
                             $('#channel').val(response.channel).trigger('change');
-
-                            // Update 2: Gender
                             $('#genderpengikut').val(response.gender).trigger('change');
-
                             $('#gmv').val(response.gmv);
                             $('#itemsterjual').val(response.item_terjual);
-
-                            // Update 3: Umur (Checkbox)
                             $('input[name="ages[]"]').prop('checked', false);
                             if (response.umur && response.umur.length > 0) {
                                 response.umur.forEach(function(ageString) {
@@ -356,42 +348,27 @@
                                     });
                                 });
                             }
-
-                            // Update 4: Kategori (Select2)
                             $('select[name="categories[]"]').val(null).trigger('change');
                             let matchedCategories = [];
                             
                             if (response.kategori && response.kategori.length > 0) {
-                                // MENGAMBIL HANYA 5 KATEGORI PERTAMA DARI API
                                 let apiCategories = response.kategori.slice(0, 5);
-                                
-                                console.log("TOP 5 Kategori dari API:", apiCategories);
 
                                 $('select[name="categories[]"] option').each(function() {
                                     let optionVal = $(this).val();
                                     let rawOptionText = $(this).text().toLowerCase();
-                                    
-                                    // PEMBERSIHAN EKSTREM: Hapus semua karakter yang bukan huruf a-z dan angka
-                                    // Contoh: "Koper & Tas" -> "kopertas"
                                     let cleanOptionText = rawOptionText.replace(/&amp;/g, '').replace(/dan/g, '').replace(/[^a-z0-9]/g, '');
-                                    
                                     let isMatch = apiCategories.some(function(apiCat) {
-                                        // PEMBERSIHAN EKSTREM PADA DATA API
                                         let cleanApiCat = apiCat.toLowerCase().replace(/&amp;/g, '').replace(/dan/g, '').replace(/[^a-z0-9]/g, '');
                                         return cleanApiCat === cleanOptionText;
                                     });
-                                    
+
                                     if (isMatch) {
                                         matchedCategories.push(optionVal); 
                                     }
                                 });
-                                
-                                console.log("Kategori yang COCOK dengan database:", matchedCategories);
                             }
-                            
-                            // Masukkan ke dalam Select2
                             $('select[name="categories[]"]').val(matchedCategories).trigger('change');
-
                         } else {
                             let toastEl = new bootstrap.Toast(document.getElementById('autofill-toast'), {
                                 delay: 3000
