@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ContentStyle;
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreContentStyleRequest;
 use App\Http\Requests\UpdateContentStyleRequest;
+
+use App\Models\ContentStyle;
+
+use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 
 
@@ -25,8 +27,7 @@ class ContentStyleController extends Controller
             $sort = 'name';
         }
 
-        $contentStyles = ContentStyle::query()
-            ->search($q)
+        $contentStyles = ContentStyle::search($q)
             ->orderBy($sort, $dir)
             ->paginate(10)
             ->withQueryString();

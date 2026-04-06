@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 
+use App\Models\Category;
+
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -26,8 +26,7 @@ class CategoryController extends Controller
             $sort = 'name';
         }
 
-        $categories = Category::query()
-            ->search($q)
+        $categories = Category::search($q)
             ->orderBy($sort, $dir)
             ->paginate(10)
             ->withQueryString();

@@ -10,86 +10,86 @@ use App\Http\Requests\UpdateTestRequest;
 
 class TestController extends Controller
 {
-    public function index()
-    {
-        $tests = Test::query()
-            ->paginate(10)
-            ->withQueryString();
+    // public function index()
+    // {
+    //     $tests = Test::query()
+    //         ->paginate(10)
+    //         ->withQueryString();
 
-        return view('admin.dashboard.index', compact('tests'));
-    }
+    //     return view('admin.dashboard.index', compact('tests'));
+    // }
 
-    public function create()
-    {
-        return view('admin.dashboard.index');
-    }
+    // public function create()
+    // {
+    //     return view('admin.dashboard.index');
+    // }
 
-    public function store(StoreTestRequest $request)
-    {
-        $data = $request->validated();
-        Test::create([
-            'name'  => $data['name'],
-        ]);
+    // public function store(StoreTestRequest $request)
+    // {
+    //     $data = $request->validated();
+    //     Test::create([
+    //         'name'  => $data['name'],
+    //     ]);
 
-        return redirect()
-            ->route('admin.dashboard.index')
-            ->with('success', 'Test berhasil ditambahkan.');
-    }
+    //     return redirect()
+    //         ->route('admin.dashboard.index')
+    //         ->with('success', 'Test berhasil ditambahkan.');
+    // }
 
-    public function edit(Test $test)
-    {
-        return view('admin.dashboard.index', compact('test'));
-    }
+    // public function edit(Test $test)
+    // {
+    //     return view('admin.dashboard.index', compact('test'));
+    // }
 
-    public function update(UpdateTestRequest $request, Test $test)
-    {
-        $data = $request->validated();
-        $test->update([
-            'name'  => $data['name'],
-        ]);
+    // public function update(UpdateTestRequest $request, Test $test)
+    // {
+    //     $data = $request->validated();
+    //     $test->update([
+    //         'name'  => $data['name'],
+    //     ]);
 
-        return redirect()
-            ->route('admin.dashboard.index')
-            ->with('success', 'Test berhasil diperbarui.');
-    }
+    //     return redirect()
+    //         ->route('admin.dashboard.index')
+    //         ->with('success', 'Test berhasil diperbarui.');
+    // }
 
-    public function destroy(Test $test)
-    {
-        $test->delete();
+    // public function destroy(Test $test)
+    // {
+    //     $test->delete();
 
-        return redirect()
-            ->route('admin.dashboard.index')
-            ->with('success', 'Test berhasil dihapus.');
-    }
+    //     return redirect()
+    //         ->route('admin.dashboard.index')
+    //         ->with('success', 'Test berhasil dihapus.');
+    // }
 
-    public function bulkDestroy(Request $request)
-    {
-        $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'exists:tests,id',
-        ]);
+    // public function bulkDestroy(Request $request)
+    // {
+    //     $request->validate([
+    //         'ids'   => 'required|array',
+    //         'ids.*' => 'exists:tests,id',
+    //     ]);
 
-        try {
-            $ids = $request->input('ids');
-            Test::whereIn('id', $ids)->delete();
+    //     try {
+    //         $ids = $request->input('ids');
+    //         Test::whereIn('id', $ids)->delete();
 
-            return redirect()->back()
-                ->with('success', count($ids) . ' Test berhasil dihapus.');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
-        }
-    }
+    //         return redirect()->back()
+    //             ->with('success', count($ids) . ' Test berhasil dihapus.');
+    //     } catch (\Exception $e) {
+    //         return redirect()->back()
+    //             ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+    //     }
+    // }
 
-    public function checkUsername(Request $request)
-    {
-        $request->validate([
-            'username' => 'required|string|max:255',
-        ]);
+    // public function checkUsername(Request $request)
+    // {
+    //     $request->validate([
+    //         'username' => 'required|string|max:255',
+    //     ]);
 
-        $username   = $request->input('username');
-        $exists     = Test::where('username', $username)->exists();
+    //     $username   = $request->input('username');
+    //     $exists     = Test::where('username', $username)->exists();
 
-        return response()->json(['exists' => $exists]);
-    }
+    //     return response()->json(['exists' => $exists]);
+    // }
 }

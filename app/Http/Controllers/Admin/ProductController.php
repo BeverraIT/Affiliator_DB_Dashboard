@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+
+use App\Models\Product;
+
 use App\Imports\ProductsImport;
 use App\Exports\ProductsExport;
-use Maatwebsite\Excel\Facades\Excel;
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {

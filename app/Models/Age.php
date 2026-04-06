@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Age extends Model
 {
-    protected $fillable = ['name'];
+    protected $table = 'ages';
+    protected $primaryKey = 'id';
     public $timestamps = false;
+    protected $fillable = ['name'];
 
     public function creators(): BelongsToMany
     {

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
 
+use App\Models\User;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -103,8 +105,8 @@ class UserController extends Controller
         ]);
 
         $ids = $request->input('ids');
-
-        if (in_array(auth()->id(), $ids)) {
+        
+        if (in_array(Auth::id(), $ids)) {
             return redirect()->back()
                 ->with('error', 'Gagal: Anda tidak dapat menghapus akun Anda sendiri.');
         }

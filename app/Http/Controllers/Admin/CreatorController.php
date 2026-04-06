@@ -3,20 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCreatorRequest;
+use App\Http\Requests\UpdateCreatorRequest;
+use App\Http\Requests\CheckUsernameRequest;
+
 use App\Models\Category;
 use App\Models\ContentStyle;
 use App\Models\Creator;
 use App\Models\Age;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use App\Http\Requests\StoreCreatorRequest;
-use App\Http\Requests\UpdateCreatorRequest;
-use App\Http\Requests\CheckUsernameRequest;
+
 use App\Imports\CreatorsImport;
 use App\Exports\CreatorsExport;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -53,8 +57,7 @@ class CreatorController extends Controller
         }
 
         // QUERY
-        $query = Creator::query()
-            ->with([
+        $query = Creator::with([
                 'user:id,name',
                 'contentStyles:id,name',
                 'categories:id,name',
@@ -165,7 +168,7 @@ class CreatorController extends Controller
         $validated = $request->safe();
         DB::transaction(function () use ($validated) {
             $data = $validated->collect()->except(['ages', 'categories', 'contentstyles']);
-            $data['user_id'] = auth()->id();
+            $data['user_id'] = Auth::id();
 
             $creator = Creator::create($data->all());
             $creator->ages()->sync($validated->collect('ages'));
@@ -317,7 +320,6 @@ class CreatorController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            \Log::error('Error saat checkUsername: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
@@ -472,7 +474,6 @@ class CreatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal terhubung ke API Fastmoss']);
 
         } catch (\Exception $e) {
-            Log::error("Parsing Error untuk {$username}: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
         }
     }
