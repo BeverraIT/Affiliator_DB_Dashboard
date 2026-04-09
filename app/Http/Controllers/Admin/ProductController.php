@@ -29,6 +29,7 @@ class ProductController extends Controller
             'sku',
             'harga'
         ];
+
         if (!in_array($sort, $allowedSort, true)) {
             $sort = 'sku';
         }

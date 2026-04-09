@@ -25,6 +25,7 @@ class DashboardController extends Controller
         }
 
         // 2. Base Query untuk Stats Card & Tables
+        // Ada bug logika disini, aku filter deal_date tapi default pakai created_at
         $baseQuery = SendSample::filterDate($startDate, $endDate, 'deal_date');
 
         // 3. Menghitung Stats

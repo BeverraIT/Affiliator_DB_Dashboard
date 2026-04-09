@@ -44,8 +44,13 @@ class User extends Authenticatable
 
     public function creators(): HasMany
     {
-        return $this->hasMany(Creator::class, 'user_id');
+        return $this->hasMany(Creator::class);
     }
+
+    // public function sendSamples(): HasMany
+    // {
+    //     return $this->hasMany(SendSample::class);
+    // }
 
     public function scopeSearch($query, $q)
     {

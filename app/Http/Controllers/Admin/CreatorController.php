@@ -176,6 +176,16 @@ class CreatorController extends Controller
             $creator->contentStyles()->sync($validated->collect('contentstyles'));
         });
 
+        // DB::transaction(function () use ($validated) {
+        //     $data = $validated->collect()->except(['ages', 'categories', 'contentstyles']);
+        //     $data['user_id'] = Auth::id();
+
+        //     $creator = auth()->user()->creators()->create($data->all());
+        //     $creator->ages()->sync($validated->collect('ages'));
+        //     $creator->categories()->sync($validated->collect('categories'));
+        //     $creator->contentStyles()->sync($validated->collect('contentstyles'));
+        // });
+
         return redirect()
             ->route('admin.kreator.index')
             ->with('success', 'Kreator berhasil ditambahkan.');
@@ -340,29 +350,19 @@ class CreatorController extends Controller
         }
 
         $url = "https://www.fastmoss.com/api/author/search";
+        $currentTime = (string) now()->timestamp;
+        $nonce = (string) random_int(10000000, 99999999);
 
         // Parameter Query String
         $params = [
-            "page" => "1",
-            "pagesize" => "10",
-            "df" => "ZnNfaHR0cHM6Ly93d3cuZmFzdG1vc3MuY29tX3Bz",
-            "region" => "ID",
-            "order" => "12,2",
-            "shop_window" => "1",
             "words" => $username,
-            "_time" => "1773295942",
-            "cnonce" => "83508282"
+            "_time" => $currentTime,
+            "cnonce" => $nonce
         ];
 
         // Headers
         $headers = [
             "accept" => "application/json, text/plain, */*",
-            "accept-language" => "en-GB,en-US;q=0.9,en;q=0.8",
-            "cookie" => 'NEXT_LOCALE=id; region=ID; utm_country=ID; utm_south=google; utm_id=kw_id_0923_01; utm_lang=id; userTimeZone=Asia%2FJakarta; fp_visid=912b5bfd6424bbde69459cee5dc9fda0; _gcl_aw=GCL.1773290988.CjwKCAjwpcTNBhA5EiwAdO1S9lt_4DP4gt6ISqyWQ5WgM4iB_ehBXxS9O1jKwfdAqCeHI6kSLpmdTRoCzycQAvD_BwE; _gcl_gs=2.1.k1$i1773290985$u149463969; _gcl_au=1.1.474744362.1773290988; _ga=GA1.1.1586303629.1773290988; gg_client_id=1586303629.1773290988; _clck=7sfctb%5E2%5Eg4a%5E0%5E2262; _tt_enable_cookie=1; _ttp=01KKG629BYXGPQATJYM0B7TPQC_.tt.1; _fbp=fb.1.1773290989053.502956957458350040; _rdt_uuid=1773290988327.48840761-48dd-46bb-a8f0-7c86575933f3; _uetsid=e6568ea01dce11f1b3d9ed65d492f8b8|7ys4d2|2|g4a|0|2262; ttcsid_CJMMQFRC77U1G7J3JGP0=1773293735736::d6Y0pYVYLQDa2CgcBd32.2.1773293893983.1; ttcsid=1773293735735::O_1M44FYXWiOeS1MogEx.2.1773293893986.0; ttcsid_CJOP1H3C77UDO397C3M0=1773293735736::KUBn_mXhM1XtC4DXb9FU.2.1773293893986.1; _uetvid=e65681b01dce11f1b8da851d4e4a9640|gerv6r|1773295735236|2|1|bat.bing.com/p/insights/c/i; _clsk=47t0aw%5E1773295735707%5E2%5E1%5Ewww.clarity.ms%2Feus2-c%2Fcollect; _ga_GD8ST04HB5=GS2.1.s1773295734$o3$g1$t1773295941$j60$l0$h1569402406; _ga_J8P3E5KDGJ=GS2.1.s1773295734$o3$g1$t1773295941$j60$l0$h1621288018',
-            "fm-sign" => "2ea8c6a30b24f13fb7a524aad92611b1",
-            "lang" => "ID_ID",
-            "referer" => "https://www.fastmoss.com/id/influencer/search?shop_window=1&page=1&words={$username}",
-            "region" => "ID",
             "source" => "pc",
             "user-agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
         ];

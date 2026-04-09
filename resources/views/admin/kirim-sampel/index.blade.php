@@ -254,7 +254,7 @@
                         $perjVideo      = (int) ($row->perjanjian_video ?? 0);
                         $hasIdPesanan   = !empty($row->id_pesanan);
                         $idPesananVal   = (string) ($row->id_pesanan ?? '');
-                        
+
                         $usernameVal    = $row->creator->username ?? $row->creator->name ?? '-';
                     @endphp
 

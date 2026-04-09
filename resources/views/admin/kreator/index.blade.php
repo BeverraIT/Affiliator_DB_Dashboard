@@ -607,19 +607,13 @@
         });
 
         window.copyUsername = function(text, buttonElement) {
-            // API bawaan browser untuk copy ke clipboard
-            navigator.clipboard.writeText(text).then(function() {
-                
-                // Cek apakah sudah ada popup sebelumnya agar tidak menumpuk
+            const showPopup = () => {
                 let existingPopup = buttonElement.querySelector('.copy-popup');
                 if (existingPopup) existingPopup.remove();
 
-                // Buat elemen popup
                 let popup = document.createElement('span');
-                popup.innerText = 'Copied!';
+                popup.innerText = text + ' berhasil disalin.';
                 popup.className = 'badge bg-dark copy-popup position-absolute shadow-sm';
-                
-                // Styling posisi agar melayang di atas tombol
                 popup.style.top = '-25px';
                 popup.style.left = '50%';
                 popup.style.transform = 'translateX(-50%)';
@@ -627,19 +621,48 @@
                 popup.style.fontSize = '10px';
                 popup.style.transition = 'opacity 0.3s ease';
 
-                // Masukkan popup ke dalam tombol
                 buttonElement.appendChild(popup);
 
-                // Hilangkan popup setelah 1.5 detik
                 setTimeout(() => {
                     popup.style.opacity = '0';
-                    setTimeout(() => popup.remove(), 300); // Tunggu animasi fade out selesai
+                    setTimeout(() => popup.remove(), 300);
                 }, 1500);
+            };
 
-            }).catch(function(err) {
-                console.error('Gagal menyalin teks: ', err);
-                alert('Gagal menyalin teks.');
-            });
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showPopup();
+                }).catch(function(err) {
+                    console.error('Gagal menyalin teks (API): ', err);
+                    alert('Gagal menyalin teks.');
+                });
+            } else {
+                try {
+                    let textArea = document.createElement("textarea");
+                    textArea.value = text;
+
+                    textArea.style.position = "fixed";
+                    textArea.style.top = "0";
+                    textArea.style.left = "0";
+                    textArea.style.opacity = "0";
+                    
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+
+                    let successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    if (successful) {
+                        showPopup();
+                    } else {
+                        alert('Gagal menyalin teks (Fallback).');
+                    }
+                } catch (err) {
+                    console.error('Gagal menyalin teks (Fallback error): ', err);
+                    alert('Gagal menyalin teks.');
+                }
+            }
         }
         
     </script>
