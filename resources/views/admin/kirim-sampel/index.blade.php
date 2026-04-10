@@ -26,6 +26,21 @@
         </div>
 
         <div class="d-flex gap-2">
+            {{-- BUTTON UPDATE PIC MASSAL --}}
+            <button type="button" 
+                class="btn btn-warning shadow-sm rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width:44px;height:44px;"
+                data-bs-toggle="modal" 
+                data-bs-target="#updatePicModal"
+                aria-label="Update PIC Massal"
+                title="Update PIC Massal">
+                
+                {{-- Icon Person dengan gear (melambangkan edit admin/PIC) --}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm.256 7a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Zm3.63-4.54c.18-.613 1.048-.613 1.229 0l.043.148a.64.64 0 0 0 .921.382l.136-.074c.561-.306 1.175.308.87.869l-.075.136a.64.64 0 0 0 .382.92l.149.045c.612.18.612 1.048 0 1.229l-.15.043a.64.64 0 0 0-.38.921l.074.136c.305.561-.309 1.175-.87.87l-.136-.075a.64.64 0 0 0-.92.382l-.045.149c-.18.612-1.048.612-1.229 0l-.043-.15a.64.64 0 0 0-.921-.38l-.136.074c-.561.305-1.175-.309-.87-.87l.075-.136a.64.64 0 0 0-.382-.92l-.148-.045c-.613-.18-.613-1.048 0-1.229l.148-.043a.64.64 0 0 0 .382-.921l-.074-.136c-.306-.561.308-1.175.869-.87l.136.075a.64.64 0 0 0 .92-.382zM14 12.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z"/>
+                </svg>
+            </button>
+
             {{-- BUTTON BULK DELETE --}}
             <button type="button" 
                     id="btnBulkDelete" 
@@ -486,6 +501,62 @@
         </div>
     </div>
 
+    {{-- MODAL UPDATE PIC MASSAL --}}
+    <div class="modal fade" id="updatePicModal" tabindex="-1" aria-labelledby="updatePicModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="updatePicModalLabel">Update PIC Massal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <form id="formUpdatePicMassal">
+                    @csrf
+                    <div class="modal-body">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">PIC Lama</label>
+                            <select class="form-select select2-update-pic" name="old_pic" required style="width: 100%;">
+                                <option value=""></option>
+                                @foreach($optPics as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Toko</label>
+                            <select class="form-select select2-update-pic" name="store_id" required style="width: 100%;">
+                                <option value=""></option>
+                                @foreach($optStores as $s)
+                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-primary">PIC Baru</label>
+                            <select class="form-select select2-update-pic" name="new_pic_id" required style="width: 100%;">
+                                <option value=""></option>
+                                @foreach($optPics as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light text-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-warning d-flex align-items-center gap-2" id="btnSubmitUpdatePic">
+                            Update PIC
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- TOAST COPY --}}
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
         <div id="copyToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="polite" aria-atomic="true">
@@ -498,6 +569,9 @@
 @endsection
 
 @push('scripts')
+    {{-- Tambahkan CDN SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- VARIABEL ---
@@ -618,6 +692,83 @@
 
             $('.select2-container').on('click', function (e) {
                 e.stopPropagation();
+            });
+
+
+            $('#updatePicModal').on('shown.bs.modal', function () {
+                $('.select2-update-pic').select2({
+                    theme: "bootstrap-5",
+                    dropdownParent: $('#updatePicModal'),
+                    placeholder: 'Pilih...',
+                    allowClear: true
+                });
+            });
+
+            document.getElementById('formUpdatePicMassal').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const form = this;
+                const submitBtn = document.getElementById('btnSubmitUpdatePic');
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Memproses...';
+
+                const formData = new FormData(form);
+
+                const actionUrl = "{{ route('admin.kirim-sampel.update-pic-massal') }}"; 
+
+                fetch(actionUrl, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": formData.get('_token'),
+                        "Accept": "application/json"
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Update PIC';
+                    
+                    if(data.success) {
+                        // Tutup modal agar tampilan rapi
+                        bootstrap.Modal.getInstance(document.getElementById('updatePicModal')).hide();
+                        
+                        // SweetAlert2 Success
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: `${data.message} (${data.jumlah_diupdate} data diupdate)`,
+                            showConfirmButton: false,
+                            timer: 1500, 
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.reload(); 
+                        });
+
+                    } else {
+                        // SweetAlert2 Error validasi/logika
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: data.message,
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                })
+                .catch(error => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Update PIC';
+                    
+                    // SweetAlert2 Error Sistem
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Kesalahan Sistem',
+                        text: 'Terjadi kesalahan pada server (Error 500). Silakan cek console atau log Laravel.',
+                        confirmButtonColor: '#d33'
+                    });
+                    console.error(error);
+                });
             });
         });
     </script>

@@ -22,6 +22,8 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::post('/kirim-sampel/update-pic-massal', [KirimSampelController::class, 'updatePicMassal'])
+            ->name('kirim-sampel.update-pic-massal');
         Route::get('kirim-sampel/export', [KirimSampelController::class, 'export'])
             ->name('kirim-sampel.export');
         Route::post('/kirim-sampel/import', [KirimSampelController::class, 'import'])

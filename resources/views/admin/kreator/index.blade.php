@@ -294,12 +294,16 @@
                                         {{ $creator->username }}
                                     </a>
 
-                                    <button type="button" 
-                                        class="btn btn-sm btn-link text-secondary p-0 border-0 position-relative d-inline-flex align-items-center" 
-                                        onclick="copyUsername('{{ $creator->username }}', this)" 
-                                        title="Copy Username">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+                                    {{-- BUTTON COPY USERNAME --}}
+                                    <button type="button"
+                                            @class(['btn', 'btn-sm', 'btn-outline-secondary', 'rounded-circle', 'd-inline-flex', 'align-items-center', 'justify-content-center'])
+                                            style="width:28px;height:28px;"
+                                            data-copy="{{ $creator->username }}"
+                                            onclick="copyIdPesanan(this)"
+                                            aria-label="Salin Username" title="Salin Username">
+                                        <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
+                                            <path d="M8 3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3z"/>
+                                            <path d="M6 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-2"/>
                                         </svg>
                                     </button>
                                     @if((int)$creator->top_creator === 1)
@@ -464,6 +468,16 @@
         </div>
     </div>
 
+    {{-- TOAST COPY --}}
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <div id="copyToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="copyToastText">Tersalin.</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Tutup"></button>
+            </div>
+        </div>
+    </div>
+
     {{-- FORM BULK DELETE --}}
     <form id="formBulkDelete" action="{{ route('admin.kreator.bulk_destroy') }}" method="POST" style="display:none;">
         @csrf
@@ -605,65 +619,6 @@
                 e.stopPropagation();
             });
         });
-
-        window.copyUsername = function(text, buttonElement) {
-            const showPopup = () => {
-                let existingPopup = buttonElement.querySelector('.copy-popup');
-                if (existingPopup) existingPopup.remove();
-
-                let popup = document.createElement('span');
-                popup.innerText = text + ' berhasil disalin.';
-                popup.className = 'badge bg-dark copy-popup position-absolute shadow-sm';
-                popup.style.top = '-25px';
-                popup.style.left = '50%';
-                popup.style.transform = 'translateX(-50%)';
-                popup.style.zIndex = '1050';
-                popup.style.fontSize = '10px';
-                popup.style.transition = 'opacity 0.3s ease';
-
-                buttonElement.appendChild(popup);
-
-                setTimeout(() => {
-                    popup.style.opacity = '0';
-                    setTimeout(() => popup.remove(), 300);
-                }, 1500);
-            };
-
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(function() {
-                    showPopup();
-                }).catch(function(err) {
-                    console.error('Gagal menyalin teks (API): ', err);
-                    alert('Gagal menyalin teks.');
-                });
-            } else {
-                try {
-                    let textArea = document.createElement("textarea");
-                    textArea.value = text;
-
-                    textArea.style.position = "fixed";
-                    textArea.style.top = "0";
-                    textArea.style.left = "0";
-                    textArea.style.opacity = "0";
-                    
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-
-                    let successful = document.execCommand('copy');
-                    document.body.removeChild(textArea);
-
-                    if (successful) {
-                        showPopup();
-                    } else {
-                        alert('Gagal menyalin teks (Fallback).');
-                    }
-                } catch (err) {
-                    console.error('Gagal menyalin teks (Fallback error): ', err);
-                    alert('Gagal menyalin teks.');
-                }
-            }
-        }
-        
     </script>
+    <script src="{{ asset('js/admin/kirim-sampel-index.js') }}"></script>
 @endpush

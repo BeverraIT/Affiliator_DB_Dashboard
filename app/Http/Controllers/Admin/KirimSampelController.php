@@ -428,4 +428,55 @@ class KirimSampelController extends Controller
 
         return Excel::download(new SendSamplesExport($query), 'send-samples.xlsx');
     }
+
+    public function updatePicMassal(Request $request)
+    {
+        $request->validate([
+            'old_pic'   => 'required',
+            'store_id' => 'required',
+            'new_pic_id' => 'required',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $idsToUpdate = DB::table('send_sample as ss')
+                ->join('stores as st', 'ss.store_id', '=', 'st.id')
+                ->join('users as us', 'ss.pic', '=', 'us.id')
+                ->whereColumn('ss.video_dibuat', '<=', 'ss.perjanjian_video')
+                ->where('us.id', $request->old_pic)
+                ->where('st.id', $request->store_id)
+                ->pluck('ss.id'); 
+
+            if ($idsToUpdate->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data yang sesuai dengan filter tersebut.',
+                ], 404);
+            }
+
+            $updatedCount = DB::table('send_sample')
+                ->whereIn('id', $idsToUpdate)
+                ->update([
+                    'pic' => $request->new_pic_id,
+                ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil melakukan update PIC massal.',
+                'jumlah_diupdate' => $updatedCount
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat melakukan update massal.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
 }
