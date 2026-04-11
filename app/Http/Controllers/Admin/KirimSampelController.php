@@ -443,7 +443,7 @@ class KirimSampelController extends Controller
             $idsToUpdate = DB::table('send_sample as ss')
                 ->join('stores as st', 'ss.store_id', '=', 'st.id')
                 ->join('users as us', 'ss.pic', '=', 'us.id')
-                ->whereColumn('ss.video_dibuat', '<=', 'ss.perjanjian_video')
+                ->whereColumn('ss.video_dibuat', '<', 'ss.perjanjian_video')
                 ->where('us.id', $request->old_pic)
                 ->where('st.id', $request->store_id)
                 ->pluck('ss.id'); 
