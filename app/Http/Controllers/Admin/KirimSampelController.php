@@ -168,10 +168,10 @@ class KirimSampelController extends Controller
 
     public function create()
     {
-        $creators   = Creator::where('is_blocked', 0)->orderBy('username')->get();
-        $stores     = Store::orderBy('name')->get();
-        $products   = Product::orderBy('sku')->get();
-        $users      = User::orderBy('name')->get();
+        $creators   = Creator::select('id', 'username')->where('is_blocked', 0)->orderBy('username')->get();
+        $stores     = Store::select('id', 'name')->orderBy('name')->get();
+        $products   = Product::select('id', 'sku')->orderBy('sku')->get();
+        $users      = User::select('id', 'name')->orderBy('name')->get();
 
         return view('admin.kirim-sampel.create', compact(
             'creators',

@@ -50,7 +50,7 @@
                                         <option value=""></option>
                                         @foreach($creators as $creator)
                                             <option value="{{ $creator->id }}" @selected(old('creator_id') == $creator->id)>
-                                                {{ $creator->username ?? $creator->name }}
+                                                {{ $creator->username }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -112,7 +112,7 @@
                                         <option value=""></option>
                                         @foreach($products as $product)
                                             <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
-                                                {{ $product->sku ?? $product->sku_utama }}
+                                                {{ $product->sku }}
                                             </option>
                                         @endforeach
                                     </select>
