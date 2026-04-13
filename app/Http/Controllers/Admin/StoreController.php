@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateStoreRequest;
 use App\Models\Store;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class StoreController extends Controller
 {
@@ -59,6 +60,8 @@ class StoreController extends Controller
             'name' => trim($data['name']),
         ]);
 
+        Cache::forget('dropdown_stores');
+
         return redirect()
             ->route('admin.toko.index')
             ->with('success', 'Toko berhasil ditambahkan.');
@@ -74,7 +77,7 @@ class StoreController extends Controller
     public function update(UpdateStoreRequest $request, Store $store)
     {
         $store->update($request->validated());
-
+        Cache::forget('dropdown_stores');
         return redirect()
             ->route('admin.toko.index')
             ->with('success', 'Toko berhasil diperbarui.');

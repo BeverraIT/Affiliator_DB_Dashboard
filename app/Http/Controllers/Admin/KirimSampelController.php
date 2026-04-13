@@ -20,9 +20,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class KirimSampelController extends Controller
 {
@@ -139,14 +138,22 @@ class KirimSampelController extends Controller
         $optStores = Store::select('id', 'name')
             ->orderBy('name')
             ->get();
-        $optPics = User::select('id', 'name')
-            ->orderBy('name')
-            ->get();
-        $optSku = Product::select('sku_utama')
-            ->whereNotNull('sku_utama')
-            ->distinct()
-            ->orderBy('sku_utama')
-            ->get();
+        // $optPics = User::select('id', 'name')
+        //     ->orderBy('name')
+        //     ->get();
+        // $optSku = Product::select('sku_utama')
+        //     ->whereNotNull('sku_utama')
+        //     ->distinct()
+        //     ->orderBy('sku_utama')
+        //     ->get();
+
+        $optStores = Cache::remember('dropdown_stores', 86400, function () {
+            return Store::select('id', 'name')->orderBy('name')->get();
+        });
+
+        $optPics = Cache::remember('dropdown_pics', 86400, function () {
+            return User::select('id', 'name')->orderBy('name')->get();
+        });
 
         return view('admin.kirim-sampel.index', compact(
             'sendSamples',

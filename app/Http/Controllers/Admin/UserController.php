@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
@@ -56,6 +57,8 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         User::create($validated);
 
+        Cache::forget('dropdown_pics');
+
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -80,7 +83,7 @@ class UserController extends Controller
         }
 
         $user->update($validated);
-
+        Cache::forget('dropdown_pics');
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Data user berhasil diperbarui.');
