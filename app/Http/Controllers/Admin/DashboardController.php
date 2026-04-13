@@ -19,7 +19,7 @@ class DashboardController extends Controller
         if ($request->filled('date_range')) {
             $dates = explode(' - ', $request->date_range);
             $startDate = $dates[0];
-            $endDate = count($dates) > 1 ? $dates[1] : $dates[0];
+            $endDate = $dates[1] ?? $startDate;
         }
 
         $baseQuery = SendSample::filterDate($startDate, $endDate, 'deal_date');

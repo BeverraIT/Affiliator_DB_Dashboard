@@ -136,9 +136,6 @@ class KirimSampelController extends Controller
             ->withQueryString();
 
         // OPSI
-        $optCreators = Creator::select('id', 'username')
-            ->orderBy('username')
-            ->get();
         $optStores = Store::select('id', 'name')
             ->orderBy('name')
             ->get();
@@ -156,7 +153,6 @@ class KirimSampelController extends Controller
             'q',
             'sort',
             'dir',
-            'optCreators',
             'optStores',
             'optPics',
             'optSku',

@@ -180,7 +180,6 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
                             <h5 class="fw-bold text-dark mb-0">Jumlah Kreator</h5>
-                            {{-- Logic teks subtitle dinamis berdasarkan filter --}}
                             <p class="text-muted small mb-0">
                                 {{ request('date_range') ? 'Periode: ' . request('date_range') : '7 Hari Terakhir' }}
                             </p>
