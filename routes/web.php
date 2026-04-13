@@ -47,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard.index');
 
-        
+
         Route::get('/follow-up-konten', [FollowUpKontenController::class, 'index'])
             ->name('followup_konten.index');
         Route::prefix('/follow-up-konten')->name('followup_konten.')->controller(FollowUpKontenController::class)->group(function () {
@@ -76,9 +76,11 @@ Route::middleware(['auth'])->group(function () {
             ->name('content-styles.bulk_destroy');
         Route::resource('content-styles', ContentStyleController::class);
 
+
         Route::delete('categories/bulk-destroy', [CategoryController::class, 'bulkDestroy'])
             ->name('category.bulk_destroy');
         Route::resource('category', CategoryController::class);
+
 
         Route::prefix('product')->name('product.')->controller(ProductController::class)->group(function () {
             Route::get('/export', 'export')->name('export');

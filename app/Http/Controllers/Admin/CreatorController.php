@@ -78,7 +78,7 @@ class CreatorController extends Controller
             });
         }
 
-        // Filter Content Style
+        // Filter Content Style 
         if (!empty($filter_style)) {
             $query->whereHas('contentStyles', function ($q) use ($filter_style) {
                 $q->whereIn('contentstyles.id', $filter_style);
@@ -340,7 +340,6 @@ class CreatorController extends Controller
     public function autoFill(Request $request)
     {
         $username = $request->input('username');
-
         if (!$username) {
             return response()->json([
                 'success' => false, 
@@ -351,15 +350,11 @@ class CreatorController extends Controller
         $url = "https://www.fastmoss.com/api/author/search";
         $currentTime = (string) now()->timestamp;
         $nonce = (string) random_int(10000000, 99999999);
-
-        // Parameter Query String
         $params = [
             "words" => $username,
             "_time" => $currentTime,
             "cnonce" => $nonce
         ];
-
-        // Headers
         $headers = [
             "accept" => "application/json, text/plain, */*",
             "source" => "pc",
@@ -379,7 +374,6 @@ class CreatorController extends Controller
 
                 $author = $authorList[0];
 
-                // 1. CHANNEL PENJUALAN TERTINGGI
                 $salesChannels = [
                     'video' => $author['video_28d_sale_amount'] ?? 0,
                     'live' => $author['live_28d_sale_amount'] ?? 0,
@@ -387,7 +381,6 @@ class CreatorController extends Controller
                 ];
                 $topChannel = array_keys($salesChannels, max($salesChannels))[0];
 
-                // 2. GENDER PENGIKUT
                 $fansPortrait = $author['fansPortrait'] ?? [];
                 $genders = $fansPortrait['follower_genders'] ?? [];
                 
@@ -410,7 +403,6 @@ class CreatorController extends Controller
                     $genderStatus = "perempuan";
                 }
 
-                // 3. UMUR PENGIKUT (2 TERTINGGI)
                 $ages = $fansPortrait['follower_ages'] ?? [];
                 usort($ages, function($a, $b) {
                     return ((float)($b['value'] ?? 0)) <=> ((float)($a['value'] ?? 0));
@@ -424,16 +416,13 @@ class CreatorController extends Controller
                 }
 
                 $kategoriData = $author['sale_category_l1_name'] ?? [];
-                
                 $gmvShow = $author['sale_28d_amount_show'] ?? '0';
-                $gmvData = 0;
 
+                $gmvData = 0;
                 if ($gmvShow) {
                     $str = strtolower(str_replace(['RP', 'Rp', 'rp', ' '], '', $gmvShow));
-                    
                     $multiplier = 1;
 
-                    // CEK 'jt' (Juta) HARUS DI ATAS 't' (Triliun) AGAR TIDAK BENTROK
                     if (str_contains($str, 'jt')) { 
                         $multiplier = 1000000;
                         $str = str_replace('jt', '', $str);
@@ -448,17 +437,13 @@ class CreatorController extends Controller
                         $str = str_replace('rb', '', $str);
                     }
 
-                    // Hapus titik (jika ada pemisah ribuan) lalu ubah koma jadi titik (sebagai desimal)
                     $str = str_replace('.', '', $str);
                     $str = str_replace(',', '.', $str);
-                    
-                    // Ubah jadi desimal PHP (float), kalikan, dan bulatkan
                     $gmvData = round((float)$str * $multiplier);
                 }
 
                 $itemTerjualData = $author['sale_28d_count'] ?? 0;
 
-                // Mengembalikan response JSON
                 return response()->json([
                     'success'  => true,
                     'channel'  => $topChannel,

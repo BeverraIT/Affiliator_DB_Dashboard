@@ -205,7 +205,13 @@
                             <h5 class="fw-bold text-dark mb-1">TOP 10 SKU UTAMA</h5>
                             <p class="text-muted small mb-0">Produk dengan volume pengiriman tertinggi.</p>
                         </div>
-                        <span class="badge bg-primary bg-opacity-10 text-primary">By Volume</span>
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary bg-opacity-10 text-primary">By Volume</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAllSKU">
+                                <i class="bi bi-arrows-fullscreen me-1"></i> Lihat Semua
+                            </button>
+                        </div>
                     </div>
 
                     <div class="table-responsive">
@@ -251,6 +257,57 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalAllSKU" tabindex="-1" aria-labelledby="modalAllSKULabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="modalAllSKULabel">Daftar Lengkap SKU Sampel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60" class="text-center">No.</th>
+                                        <th>Nama SKU</th>
+                                        <th class="text-end">Total Qty Dikirim</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($allChartLabels as $index => $label)
+                                        <tr>
+                                            <td class="text-center fw-bold text-muted small">{{ $index + 1 }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="icon-box bg-light text-muted me-3" style="width: 30px; height: 30px; border-radius: 6px;">
+                                                        <i class="bi bi-box-seam fs-6"></i>
+                                                    </div>
+                                                    <span class="fw-semibold text-dark">{{ $label }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="fw-bold text-primary">{{ number_format($allChartValues[$index] ?? 0) }}</span>
+                                                <span class="text-muted small ms-1">Pcs</span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="text-center py-4 text-muted">Belum ada data produk.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                     </div>
                 </div>
             </div>
