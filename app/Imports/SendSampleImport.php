@@ -7,57 +7,80 @@ use App\Models\User;
 use App\Models\Store;
 use App\Models\Creator;
 use App\Models\Product;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Carbon\Carbon;
 
-class SendSampleImport implements ToModel, WithHeadingRow
+class SendSampleImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading
 {
+    /** Lookup maps di-preload sekali (menghindari 5 query per baris). */
+    protected Collection $stores;
+    protected Collection $creators;
+    protected Collection $users;
+    protected Collection $products;
+
+    /** Jumlah baris dilewati karena referensi wajib tidak ditemukan. */
+    public int $skipped = 0;
+
+    public function __construct()
+    {
+        $this->stores   = Store::get(['id', 'name'])->keyBy(fn ($s) => strtoupper(trim($s->name)));
+        $this->creators = Creator::get(['id', 'username'])->keyBy(fn ($c) => strtolower(trim($c->username)));
+        $this->users    = User::get(['id', 'name'])->keyBy(fn ($u) => ucwords(strtolower(trim($u->name))));
+        $this->products = Product::get(['id', 'sku'])->keyBy(fn ($p) => trim($p->sku));
+    }
+
     public function model(array $row)
     {
-        $namaToko = strtoupper(trim($row['toko'] ?? ''));
-        $store    = Store::where('name', $namaToko)->first();
+        $store    = $this->stores->get(strtoupper(trim($row['toko'] ?? '')));
+        $creator  = $this->creators->get(strtolower(trim($row['kreator'] ?? '')));
+        $pic      = $this->users->get(ucwords(strtolower(trim($row['pic'] ?? ''))));
+        $product  = $this->products->get(trim($row['sku'] ?? ''));
 
-        $usernameKreator = strtolower(trim($row['kreator'] ?? ''));
-        $creator  = Creator::where('username', $usernameKreator)->first();
-
-        $namaPic  = ucwords(strtolower(trim($row['pic'] ?? '')));
-        $pic      = User::where('name', $namaPic)->first();
-
-        $namaAppr = ucwords(strtolower(trim($row['approve'] ?? '')));
-        $approver = User::where('name', $namaAppr)->first();
-
-        $sku      = trim($row['sku'] ?? '');
-        $product  = Product::where('sku', $sku)->first();
-
-        $tanggalKirim = $row['tanggal_kirim'] ? Date::excelToDateTimeObject($row['tanggal_kirim']) : null;
-        $estimasiSampai = null;
-        $durasiPengiriman = 7;
-
-        if ($tanggalKirim) {
-            $estimasiSampai = Carbon::instance($tanggalKirim)->copy()->addDays($durasiPengiriman);
+        // Kolom FK wajib (NOT NULL). Lewati baris yang tak cocok agar import
+        // tidak gagal total (sebelumnya menyebabkan error insert FK null).
+        if (! $store || ! $creator || ! $product || ! $pic) {
+            $this->skipped++;
+            return null;
         }
 
-        $dealDate      = $row['deal_date'] ? Date::excelToDateTimeObject($row['deal_date']) : null;
-        $tanggalAktual = $row['tanggal_aktual'] ? Date::excelToDateTimeObject($row['tanggal_aktual']) : null;
+        $approver = $this->users->get(ucwords(strtolower(trim($row['approve'] ?? ''))));
 
-        return new SendSample ([
+        $tanggalKirim   = ! empty($row['tanggal_kirim'])   ? Date::excelToDateTimeObject($row['tanggal_kirim'])   : null;
+        $estimasiSampai = $tanggalKirim ? Carbon::instance($tanggalKirim)->copy()->addDays(7) : null;
+        $dealDate       = ! empty($row['deal_date'])       ? Date::excelToDateTimeObject($row['deal_date'])       : null;
+        $tanggalAktual  = ! empty($row['tanggal_aktual'])  ? Date::excelToDateTimeObject($row['tanggal_aktual'])  : null;
+
+        return new SendSample([
             'deal_date'             => $dealDate,
-            'pic'                   => $pic ? $pic->id : null,
-            'approve'               => $approver ? $approver->id : null,
-            'store_id'              => $store ? $store->id : null,
-            'creator_id'            => $creator ? $creator->id : null,
-            'product_id'            => $product ? $product->id : null,
+            'pic'                   => $pic->id,
+            'approve'               => $approver?->id,
+            'store_id'              => $store->id,
+            'creator_id'            => $creator->id,
+            'product_id'            => $product->id,
             'tanggal_kirim'         => $tanggalKirim,
             'estimasi_sampai'       => $estimasiSampai,
             'tanggal_aktual'        => $tanggalAktual,
-            'qty'                   => $row['qty'],
-            'id_pesanan'            => $row['id_pesanan'],
-            'video_dibuat'          => $row['video_dibuat'],
-            'live_dibuat'           => $row['live_dibuat'],
-            'perjanjian_livestream' => $row['perjanjian_livestream'],
-            'perjanjian_video'      => $row['perjanjian_video'],
+            'qty'                   => (int) ($row['qty'] ?? 0),
+            'id_pesanan'            => $row['id_pesanan'] ?? null,
+            'video_dibuat'          => $row['video_dibuat'] ?? null,
+            'live_dibuat'           => $row['live_dibuat'] ?? null,
+            'perjanjian_livestream' => $row['perjanjian_livestream'] ?? null,
+            'perjanjian_video'      => $row['perjanjian_video'] ?? null,
         ]);
+    }
+
+    public function batchSize(): int
+    {
+        return 500;
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 }

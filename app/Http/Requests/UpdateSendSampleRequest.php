@@ -17,6 +17,7 @@ class UpdateSendSampleRequest extends FormRequest
             'creator_id'            => ['required', 'exists:creators,id'],
             'store_id'              => ['required', 'exists:stores,id'],
             'product_id'            => ['required', 'exists:products,id'],
+            'seller_product_id'     => ['nullable', 'string'],
             'pic'                   => ['required'],
             'approve'               => ['required'],
             'deal_date'             => ['nullable', 'date'],

@@ -19,6 +19,7 @@ class StoreSendSampleRequest extends FormRequest
             'approve'               => ['required'],
             'store_id'              => ['required', 'exists:stores,id'],
             'product_id'            => ['required', 'exists:products,id'],
+            'seller_product_id'     => ['nullable', 'string'],
             'deal_date'             => ['required', 'date'],
             'tanggal_kirim'         => ['required', 'date', 'after_or_equal:deal_date'],
             'estimasi_sampai'       => ['nullable', 'date', 'after_or_equal:tanggal_kirim'],

@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HandlesBulkDelete;
+use App\Http\Controllers\Concerns\ResolvesListQuery;
 use App\Http\Requests\StoreCreatorRequest;
 use App\Http\Requests\UpdateCreatorRequest;
-use App\Http\Requests\CheckUsernameRequest;
 
 use App\Models\Category;
 use App\Models\ContentStyle;
@@ -15,6 +16,7 @@ use App\Models\User;
 
 use App\Imports\CreatorsImport;
 use App\Exports\CreatorsExport;
+use App\Exports\TemplateExport;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -26,125 +28,79 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class CreatorController extends Controller
 {
+    use HandlesBulkDelete;
+    use ResolvesListQuery;
+
     public function index(Request $request)
     {
-        // INPUT REQUEST
-        $q = (string) $request->query('q', '');
+        $q = trim((string) $request->query('q', ''));
 
-        // INPUT FILTER
-        $filter_umur        = $request->query('filter_umur', []);
-        $filter_kategori    = $request->query('filter_kategori', []);
-        $filter_style       = $request->query('filter_style', []);
-        $filter_no_wa       = $request->query('filter_no_wa');
-        $filter_user        = $request->query('filter_user', []);
-        $min_gmv            = $request->query('min_gmv');
-        $max_gmv            = $request->query('max_gmv');
+        $filterUmur     = $request->query('filter_umur', []);
+        $filterKategori = $request->query('filter_kategori', []);
+        $filterStyle    = $request->query('filter_style', []);
+        $filterNoWa     = $request->query('filter_no_wa');
+        $filterUser     = $request->query('filter_user', []);
+        $minGmv         = $request->query('min_gmv');
+        $maxGmv         = $request->query('max_gmv');
 
-        // SORTING
-        $sort = (string) $request->query('sort', 'id');
-        $dir = strtolower((string) $request->query('dir', 'desc')) == 'asc' ? 'asc' : 'desc';
-        $allowedSort = [
+        [$sort, $dir] = $this->resolveSort(
+            $request,
+            ['id', 'username', 'gmv', 'itemsterjual', 'channel', 'genderpengikut'],
             'id',
-            'username',
-            'gmv',
-            'itemsterjual',
-            'channel',
-            'genderpengikut',
-        ];
+            'desc'
+        );
 
-        if(!in_array($sort, $allowedSort, true)) {
-            $sort = 'username';
-        }
-
-        // QUERY
         $query = Creator::with([
-                'user:id,name',
-                'contentStyles:id,name',
-                'categories:id,name',
-                'ages:id,name',
-            ]);
+            'user:id,name',
+            'contentStyles:id,name',
+            'categories:id,name',
+            'ages:id,name',
+        ]);
 
-        // Filter Umur
-        if (!empty($filter_umur)) {
-            $query->whereHas('ages', function ($q) use ($filter_umur) {
-                $q->whereIn('ages.id', $filter_umur);
-            });
+        if (! empty($filterUmur)) {
+            $query->whereHas('ages', fn ($sq) => $sq->whereIn('ages.id', $filterUmur));
         }
 
-        // Filter Kategori
-        if (!empty($filter_kategori)) {
-            $query->whereHas('categories', function ($q) use ($filter_kategori) {
-                $q->whereIn('categories.id', $filter_kategori);
-            });
+        if (! empty($filterKategori)) {
+            $query->whereHas('categories', fn ($sq) => $sq->whereIn('categories.id', $filterKategori));
         }
 
-        // Filter Content Style 
-        if (!empty($filter_style)) {
-            $query->whereHas('contentStyles', function ($q) use ($filter_style) {
-                $q->whereIn('contentstyles.id', $filter_style);
-            });
+        if (! empty($filterStyle)) {
+            $query->whereHas('contentStyles', fn ($sq) => $sq->whereIn('contentstyles.id', $filterStyle));
         }
 
-        // Filter User
-        if (!empty($filter_user)) {
-            $query->whereIn('user_id', $filter_user);
+        if (! empty($filterUser)) {
+            $query->whereIn('user_id', $filterUser);
         }
 
-        // Filter GMV Range
-        $query->when($min_gmv, function ($q) use ($min_gmv) {
-            $cleanMin = preg_replace('/[^0-9]/', '', $min_gmv);
-            $q->where('gmv', '>=', $cleanMin);
-        });
+        $query->when($minGmv, fn ($sq) => $sq->where('gmv', '>=', preg_replace('/[^0-9]/', '', $minGmv)));
+        $query->when($maxGmv, fn ($sq) => $sq->where('gmv', '<=', preg_replace('/[^0-9]/', '', $maxGmv)));
 
-        $query->when($max_gmv, function ($q) use ($max_gmv) {
-            $cleanMax = preg_replace('/[^0-9]/', '', $max_gmv);
-            $q->where('gmv', '<=', $cleanMax);
-        });
-
-        // Filter Top Kreator
         if ($request->has('filter_top_creator')) {
             $query->where('top_creator', 1);
         }
 
-        // Filter Kreator Diblokir
         if ($request->has('filter_is_blocked')) {
             $query->where('is_blocked', 1);
         }
 
-        // Filter Tanpa WA
-        $query->when($filter_no_wa, function ($q) {
-            $q->whereNull('nomerwa');
-        });
+        $query->when($filterNoWa, fn ($sq) => $sq->whereNull('nomerwa'));
 
-        // SEARCH & SORTING
         $creators = $query->search($q)
             ->orderBy($sort, $dir)
             ->paginate(10)
-            ->withQueryString(); 
+            ->withQueryString();
 
-        $q = trim($q);
-
-        // DATA OPSI
-        $ageOptions      = Age::orderBy('name')->get(); 
+        $ageOptions      = Age::orderBy('name')->get();
         $categoryOptions = Category::orderBy('name')->get();
         $styleOptions    = ContentStyle::orderBy('name')->get();
         $userOptions     = User::orderBy('name')->get();
 
         return view('admin.kreator.index', compact(
-            'creators', 
-            'q',
-            'sort',
-            'dir',
-            'ageOptions',
-            'categoryOptions',
-            'styleOptions',
-            'userOptions',
-            'filter_umur',
-            'filter_kategori',
-            'filter_style',
-            'filter_no_wa',
-            'min_gmv',
-            'max_gmv',
+            'creators', 'q', 'sort', 'dir',
+            'ageOptions', 'categoryOptions', 'styleOptions', 'userOptions',
+            'filterUmur', 'filterKategori', 'filterStyle', 'filterNoWa', 'filterUser',
+            'minGmv', 'maxGmv',
         ));
     }
 
@@ -175,16 +131,6 @@ class CreatorController extends Controller
             $creator->categories()->sync($validated->collect('categories'));
             $creator->contentStyles()->sync($validated->collect('contentstyles'));
         });
-
-        // DB::transaction(function () use ($validated) {
-        //     $data = $validated->collect()->except(['ages', 'categories', 'contentstyles']);
-        //     $data['user_id'] = Auth::id();
-
-        //     $creator = auth()->user()->creators()->create($data->all());
-        //     $creator->ages()->sync($validated->collect('ages'));
-        //     $creator->categories()->sync($validated->collect('categories'));
-        //     $creator->contentStyles()->sync($validated->collect('contentstyles'));
-        // });
 
         return redirect()
             ->route('admin.kreator.index')
@@ -238,12 +184,7 @@ class CreatorController extends Controller
         $validated = $request->safe();
 
         DB::transaction(function () use ($creator, $validated) {
-            $creator->update(
-                $validated->except([
-                    'ages',
-                    'categories',
-                    'contentstyles'
-            ]));
+            $creator->update($validated->except(['ages', 'categories', 'contentstyles']));
             $creator->ages()->sync($validated->collect('ages'));
             $creator->categories()->sync($validated->collect('categories'));
             $creator->contentStyles()->sync($validated->collect('contentstyles'));
@@ -274,39 +215,52 @@ class CreatorController extends Controller
     {
         $request->validate([
             'ids'   => 'required|array',
-            'ids.*' => 'exists:creators,id'
+            'ids.*' => 'exists:creators,id',
         ]);
 
-        Creator::whereIn('id', $request->ids)->delete();
-
-        return back()->with('success', 'Data terpilih berhasil dihapus');
+        return $this->bulkDelete(Creator::class, $request->input('ids'), 'kreator');
     }
 
 
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv'
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240'
         ]);
 
         try {
-            Excel::import(new CreatorsImport, $request->file('file'));
+            $import = new CreatorsImport;
+            Excel::import($import, $request->file('file'));
 
-            return back()->with('success', 'Berhasil upload kreator massal!');
+            $msg = "Berhasil import {$import->imported} kreator.";
+            if ($import->skipped > 0) {
+                $msg .= " {$import->skipped} dilewati (username sudah ada).";
+            }
+
+            return back()->with('success', $msg);
 
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            $failures = $e->failures();
+            $count = count($e->failures());
+            $first = $e->failures()[0] ?? null;
+            $detail = $first ? " Contoh baris {$first->row()}: " . implode(', ', $first->errors()) : '';
 
-            return back()->with('error', 'Gagal upload. Cek baris excel anda.');
-            
+            return back()->with('error', "Gagal upload: {$count} baris tidak valid." . $detail);
+
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
+    public function downloadTemplate()
+    {
+        $headers = ['username', 'channel', 'gmv', 'itemsterjual', 'genderpengikut', 'namawa', 'nomerwa', 'kategori', 'umur', 'konten_style'];
+
+        return Excel::download(new TemplateExport($headers), 'Template_Kreator.xlsx');
+    }
+
     public function export(Request $request)
     {
-        return Excel::download(new CreatorsExport($request), 'creators.xlsx');
+        return Excel::download(new CreatorsExport($request), 'Kreator_' . date('Ymd_His') . '.xlsx');
     }
 
     public function blokir(Creator $creator)
@@ -404,54 +358,45 @@ class CreatorController extends Controller
                 }
 
                 $ages = $fansPortrait['follower_ages'] ?? [];
-                usort($ages, function($a, $b) {
-                    return ((float)($b['value'] ?? 0)) <=> ((float)($a['value'] ?? 0));
-                });
-                
-                $top2Ages = [];
-                foreach (array_slice($ages, 0, 2) as $ageData) {
-                    if (isset($ageData['key'])) {
-                        $top2Ages[] = $ageData['key'];
-                    }
-                }
+                usort($ages, fn ($a, $b) => ((float)($b['value'] ?? 0)) <=> ((float)($a['value'] ?? 0)));
+                $top2Ages = array_values(array_filter(array_column(array_slice($ages, 0, 2), 'key')));
 
-                $kategoriData = $author['sale_category_l1_name'] ?? [];
-                $gmvShow = $author['sale_28d_amount_show'] ?? '0';
+                $kategori = $author['sale_category_l1_name'] ?? [];
+                $gmvShow  = $author['sale_28d_amount_show'] ?? '0';
 
-                $gmvData = 0;
+                $gmv = 0;
                 if ($gmvShow) {
-                    $str = strtolower(str_replace(['RP', 'Rp', 'rp', ' '], '', $gmvShow));
+                    $str        = str_replace([' ', 'rp'], '', strtolower($gmvShow));
                     $multiplier = 1;
 
-                    if (str_contains($str, 'jt')) { 
-                        $multiplier = 1000000;
+                    if (str_contains($str, 'jt')) {
+                        $multiplier = 1_000_000;
                         $str = str_replace('jt', '', $str);
-                    } elseif (str_contains($str, 't')) { // Triliun
-                        $multiplier = 1000000000000;
+                    } elseif (str_contains($str, 't')) {
+                        $multiplier = 1_000_000_000_000;
                         $str = str_replace('t', '', $str);
-                    } elseif (str_contains($str, 'm')) { // Miliar
-                        $multiplier = 1000000000;
+                    } elseif (str_contains($str, 'm')) {
+                        $multiplier = 1_000_000_000;
                         $str = str_replace('m', '', $str);
-                    } elseif (str_contains($str, 'rb')) { // Ribu
-                        $multiplier = 1000;
+                    } elseif (str_contains($str, 'rb')) {
+                        $multiplier = 1_000;
                         $str = str_replace('rb', '', $str);
                     }
 
-                    $str = str_replace('.', '', $str);
-                    $str = str_replace(',', '.', $str);
-                    $gmvData = round((float)$str * $multiplier);
+                    $str = str_replace(['.', ','], ['', '.'], $str);
+                    $gmv = round((float) $str * $multiplier);
                 }
 
-                $itemTerjualData = $author['sale_28d_count'] ?? 0;
+                $itemTerjual = $author['sale_28d_count'] ?? 0;
 
                 return response()->json([
-                    'success'  => true,
-                    'channel'  => $topChannel,
-                    'gender'   => $genderStatus,
-                    'umur'     => $top2Ages,
-                    'kategori' => $kategoriData,
-                    'gmv'           => $gmvData,
-                    'item_terjual'  => $itemTerjualData
+                    'success'      => true,
+                    'channel'      => $topChannel,
+                    'gender'       => $genderStatus,
+                    'umur'         => $top2Ages,
+                    'kategori'     => $kategori,
+                    'gmv'          => $gmv,
+                    'item_terjual' => $itemTerjual,
                 ]);
             }
 

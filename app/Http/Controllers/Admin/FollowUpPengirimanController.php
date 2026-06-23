@@ -17,9 +17,8 @@ class FollowUpPengirimanController extends Controller
 {
     public function index(Request $request)
     {
-        $q = (string) $request->query('q', '');
-        $search = trim($request->get('q', ''));
-        $selectedSkuUtama = $request->get('sku_utama'); 
+        $q = trim((string) $request->query('q', ''));
+        $selectedSkuUtama = $request->get('sku_utama');
         
         $user = Auth::user();
 
@@ -40,18 +39,18 @@ class FollowUpPengirimanController extends Controller
 
         // Filter Tanggal
         $query->when($request->start_date, function ($q) use ($request) {
-            $q->whereDate('tanggal_kirim', '>=', $request->start_date);
+            $q->where('tanggal_kirim', '>=', $request->start_date);
         });
 
         $query->when($request->end_date, function ($q) use ($request) {
-            $q->whereDate('tanggal_kirim', '<=', $request->end_date);
+            $q->where('tanggal_kirim', '<=', $request->end_date);
         });
 
         // Filter SKU
         $query->bySkuUtama($selectedSkuUtama);
 
         // SEARCHING
-        $items = $query->search($search)
+        $items = $query->search($q)
             ->orderBy('estimasi_sampai', 'asc')
             ->paginate(10)
             ->withQueryString();

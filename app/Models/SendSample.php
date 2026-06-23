@@ -19,6 +19,7 @@ class SendSample extends Model
         'creator_id',
         'store_id',
         'product_id',
+        'seller_product_id',
         'pic',
         'approve',
         'deal_date',
@@ -45,8 +46,8 @@ class SendSample extends Model
 
     public function scopeDateRange(Builder $query, $startDate, $endDate)
     {
-        return $query->whereDate('deal_date', '>=', $startDate)
-                     ->whereDate('deal_date', '<=', $endDate);
+        return $query->where('deal_date', '>=', $startDate)
+                     ->where('deal_date', '<=', $endDate);
     }
 
     public function scopeByPic(Builder $query, $userId)
@@ -58,7 +59,7 @@ class SendSample extends Model
     {
         return $query->whereNotNull('tanggal_dichat')
             ->where('status_follow_up_konten_mingguan', 0)
-            ->whereDate('tanggal_dichat', '<=', now()->subDays(3))
+            ->where('tanggal_dichat', '<=', now()->subDays(3)->toDateString())
             ->where(fn($q) => $q
                 ->whereColumn('video_dibuat', '<', 'perjanjian_video')
             );
@@ -68,7 +69,7 @@ class SendSample extends Model
     {
         return $query->whereNull('tanggal_aktual')
             ->whereNotNull('estimasi_sampai')
-            ->whereDate('estimasi_sampai', '<=', Carbon::today()->addDays(3));
+            ->where('estimasi_sampai', '<=', Carbon::today()->addDays(3)->toDateString());
     }
 
     public function scopeBySkuUtama(Builder $query, $sku_utama)
@@ -104,7 +105,7 @@ class SendSample extends Model
     {
         return $query->whereNull('tanggal_aktual')
             ->whereNotNull('estimasi_sampai')
-            ->whereDate('estimasi_sampai', '<=', Carbon::today()->addDays(3));
+            ->where('estimasi_sampai', '<=', Carbon::today()->addDays(3)->toDateString());
     }
 
     public function scopeUnfulfilledAgreement(Builder $query)
@@ -136,8 +137,8 @@ class SendSample extends Model
     public function scopeFilterDate($query, $start, $end, $column = 'deal_date')
     {
         if ($start && $end) {
-            return $query->whereDate($column, '>=', $start)
-                         ->whereDate($column, '<=', $end);
+            return $query->where($column, '>=', $start)
+                         ->where($column, '<=', $end);
         }
         return $query;
     }

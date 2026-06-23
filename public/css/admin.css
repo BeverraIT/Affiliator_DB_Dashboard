@@ -1,3 +1,785 @@
+/* =============================================================
+   GLOBAL LAYOUT
+   ============================================================= */
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — TOKENS
+   ============================================================= */
+
+:root {
+    /* Primary palette — from dashboard tokens */
+    --md-primary:           #1565C0;
+    --md-on-primary:        #FFFFFF;
+    --md-primary-container: #D6E4FF;
+    --md-on-primary-cont:   #001A41;
+
+    /* Surface tokens */
+    --md-surface:           #FDFBFF;
+    --md-on-surface:        #1A1B1F;
+    --md-on-surface-var:    #44464F;
+    --md-outline:           #74777F;
+    --md-outline-var:       #C4C6D0;
+
+    /* Error */
+    --md-error:             #B3261E;
+    --md-on-error:          #FFFFFF;
+    --md-error-cont:        #FFDAD6;
+    --md-on-error-cont:     #410E0B;
+
+    /* === Token tambahan (dipusatkan dari <style> inline tiap halaman admin) === */
+    --md-primary-cont:      #D6E4FF;
+
+    /* Secondary */
+    --md-secondary:         #1B5E20;
+    --md-on-secondary:      #FFFFFF;
+    --md-secondary-cont:    #C8E6C9;
+    --md-on-secondary-cont: #002107;
+
+    /* Tertiary */
+    --md-tertiary:          #6A1B9A;
+    --md-on-tertiary:       #FFFFFF;
+    --md-tertiary-cont:     #E1BEE7;
+    --md-on-tertiary-cont:  #21005D;
+
+    /* Warning */
+    --md-warning-cont:      #FFF3E0;
+    --md-on-warning-cont:   #BF360C;
+
+    /* Surface variant */
+    --md-surface-var:       #E1E2EC;
+
+    /* Elevation */
+    --md-elev-1: 0 1px 2px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+    --md-elev-2: 0 2px 6px rgba(0,0,0,.08), 0 4px 14px rgba(0,0,0,.06);
+    --md-elev-3: 0 4px 8px 3px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.20);
+
+    /* Shape */
+    --shape-sm: 4px;
+    --shape-md: 12px;
+    --shape-lg: 16px;
+    --shape-xl: 28px;
+
+    /* Nav-drawer specific */
+    --md-nav-surface:       #EEF2FF;   /* surface-container tinted with primary hue */
+    --md-nav-width:         280px;
+    --md-nav-item-height:   56px;
+    --md-nav-item-radius:   28px;      /* stadium shape */
+    --md-nav-icon-size:     24px;
+    --md-nav-h-margin:      12px;      /* left/right margin creates pill indicator */
+    --md-nav-lead-pad:      16px;      /* padding inside item before icon */
+    --md-nav-icon-gap:      12px;      /* gap between icon and label */
+
+    /* State-layer opacities (on-surface-variant base) */
+    --md-state-hover:       rgba(68, 70, 79, 0.08);
+    --md-state-pressed:     rgba(68, 70, 79, 0.12);
+    --md-state-focused:     rgba(68, 70, 79, 0.12);
+
+    /* Active-state layers (on-primary-container base) */
+    --md-state-hover-act:   rgba(0, 26, 65, 0.08);
+    --md-state-pressed-act: rgba(0, 26, 65, 0.12);
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — CONTAINER
+   ============================================================= */
+
+.md-nav-drawer {
+    width: var(--md-nav-width);
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+
+    background-color: var(--md-nav-surface);
+
+    display: flex;
+    flex-direction: column;
+
+    /* Custom scrollbar — subtle */
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-outline-var) transparent;
+}
+
+.md-nav-drawer::-webkit-scrollbar       { width: 4px; }
+.md-nav-drawer::-webkit-scrollbar-track { background: transparent; }
+.md-nav-drawer::-webkit-scrollbar-thumb { background: var(--md-outline-var); border-radius: 2px; }
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — HEADER
+   ============================================================= */
+
+.md-nav-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px 16px;
+    flex-shrink: 0;
+}
+
+.md-nav-header__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--md-primary);
+    color: var(--md-on-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+    letter-spacing: 0;
+    user-select: none;
+}
+
+.md-nav-header__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.md-nav-header__title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--md-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0;
+}
+
+.md-nav-header__subtitle {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--md-on-surface-var);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: .025em;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — DIVIDER
+   ============================================================= */
+
+.md-nav-divider {
+    border: none;
+    border-top: 1px solid var(--md-outline-var);
+    margin: 4px 0;
+    opacity: 1;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — SECTION LABEL
+   ============================================================= */
+
+.md-nav-section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--md-outline);
+    padding: 20px var(--md-nav-lead-pad) 4px calc(var(--md-nav-h-margin) + var(--md-nav-lead-pad));
+    margin: 0;
+    line-height: 1;
+    user-select: none;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — NAV LIST
+   ============================================================= */
+
+.md-nav-list {
+    list-style: none;
+    padding: 4px 0;
+    margin: 0;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — NAV ITEM
+   ============================================================= */
+
+.md-nav-item {
+    /* Layout */
+    display: flex;
+    align-items: center;
+    gap: var(--md-nav-icon-gap);
+    height: var(--md-nav-item-height);
+    padding: 0 24px 0 var(--md-nav-lead-pad);
+
+    /* Shape: stadium / pill indicator */
+    border-radius: var(--md-nav-item-radius);
+    margin: 2px var(--md-nav-h-margin);
+
+    /* Typography: labelLarge */
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .007em;
+    line-height: 1;
+
+    /* Color: inactive */
+    color: var(--md-on-surface-var);
+    text-decoration: none;
+
+    /* State */
+    position: relative;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+    background-color: transparent;
+
+    /* Reset button */
+    border: none;
+    width: calc(100% - calc(var(--md-nav-h-margin) * 2));
+    text-align: left;
+
+    /* Prevent overflow */
+    min-width: 0;
+    white-space: nowrap;
+}
+
+/* State layer via pseudo-element (sits above background, below content) */
+.md-nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: transparent;
+    transition: background-color 150ms ease;
+    pointer-events: none;
+}
+
+.md-nav-item:hover::before   { background-color: var(--md-state-hover); }
+.md-nav-item:active::before  { background-color: var(--md-state-pressed); }
+
+/* Focus visible — keyboard navigation ring */
+.md-nav-item:focus-visible {
+    outline: 3px solid var(--md-primary);
+    outline-offset: -2px;
+}
+.md-nav-item:focus:not(:focus-visible) { outline: none; }
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — ACTIVE STATE
+   ============================================================= */
+
+.md-nav-item--active {
+    background-color: var(--md-primary-container);
+    color: var(--md-on-primary-cont);
+    font-weight: 600;
+}
+
+.md-nav-item--active:hover::before  { background-color: var(--md-state-hover-act); }
+.md-nav-item--active:active::before { background-color: var(--md-state-pressed-act); }
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — ICON
+   ============================================================= */
+
+.md-nav-item__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--md-nav-icon-size);
+    height: var(--md-nav-icon-size);
+    font-size: var(--md-nav-icon-size);
+    line-height: 1;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — LABEL
+   ============================================================= */
+
+.md-nav-item__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+/* =============================================================
+   MD3 NAVIGATION DRAWER — FOOTER (LOGOUT)
+   ============================================================= */
+
+.md-nav-footer {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.md-nav-logout-form {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+/* Logout item inherits .md-nav-item; override color only */
+.md-nav-item--logout {
+    color: var(--md-error);
+    width: calc(100% - calc(var(--md-nav-h-margin) * 2));
+}
+
+.md-nav-item--logout::before          { background-color: transparent; }
+.md-nav-item--logout:hover::before    { background-color: rgba(179, 38, 30, 0.08); }
+.md-nav-item--logout:active::before   { background-color: rgba(179, 38, 30, 0.12); }
+
+/* =============================================================
+   EXISTING: nav-link active
+   ============================================================= */
+
 .nav-link.active {
     font-weight: 600;
+}
+
+/* =============================================================
+   MD3 GLOBAL DESIGN SYSTEM — EXTENDED TOKENS
+   ============================================================= */
+:root {
+    /* Primary aliases (kreator pattern) */
+    --md-primary-cont:      #D6E4FF;
+    --md-on-primary-cont:   #001A41;
+
+    /* Error */
+    --md-error-cont:        #FFDAD6;
+    --md-on-error-cont:     #410E0B;
+
+    /* Warning (custom — amber) */
+    --md-warning-cont:      #FFF3E0;
+    --md-on-warning-cont:   #BF360C;
+
+    /* Info (blue secondary) */
+    --md-info-cont:         #DAE2FF;
+    --md-on-info-cont:      #0E1B4D;
+
+    /* Success (green) */
+    --md-success-cont:      #C8E6C9;
+    --md-on-success-cont:   #002107;
+
+    /* Neutral surface */
+    --md-surface-var:       #E1E2EC;
+
+    /* Elevation */
+    --md-elev-1: 0 1px 2px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+    --md-elev-2: 0 2px 6px rgba(0,0,0,.08), 0 4px 14px rgba(0,0,0,.06);
+    --md-elev-3: 0 4px 8px 3px rgba(0,0,0,.12), 0 1px 3px rgba(0,0,0,.20);
+
+    /* Shape scale */
+    --shape-sm: 4px;
+    --shape-md: 12px;
+    --shape-lg: 16px;
+    --shape-xl: 28px;
+}
+
+/* =============================================================
+   MD3 TYPOGRAPHY SCALE
+   ============================================================= */
+.ts-headline-md   { font-size: 1.75rem;  font-weight: 400; line-height: 2.25rem;  color: var(--md-on-surface); }
+.ts-headline-sm   { font-size: 1.5rem;   font-weight: 600; line-height: 2rem;     color: var(--md-on-surface); }
+.ts-title-lg      { font-size: 1.375rem; font-weight: 400; line-height: 1.75rem;  color: var(--md-on-surface); }
+.ts-title-md      { font-size: 1rem;     font-weight: 500; line-height: 1.5rem;   color: var(--md-on-surface); letter-spacing: .009em; }
+.ts-title-sm      { font-size: .875rem;  font-weight: 500; line-height: 1.25rem;  color: var(--md-on-surface); letter-spacing: .006em; }
+.ts-body-lg       { font-size: 1rem;     font-weight: 400; line-height: 1.5rem;   color: var(--md-on-surface); letter-spacing: .031em; }
+.ts-body-md       { font-size: .875rem;  font-weight: 400; line-height: 1.25rem;  color: var(--md-on-surface); letter-spacing: .016em; }
+.ts-body-sm       { font-size: .75rem;   font-weight: 400; line-height: 1rem;     color: var(--md-on-surface); letter-spacing: .025em; }
+.ts-label-lg      { font-size: .875rem;  font-weight: 500; line-height: 1.25rem;  letter-spacing: .006em; }
+.ts-label-md      { font-size: .75rem;   font-weight: 500; line-height: 1rem;     letter-spacing: .05em; }
+.ts-label-sm      { font-size: .6875rem; font-weight: 500; line-height: 1rem;     letter-spacing: .031em; }
+.ts-color-secondary { color: var(--md-on-surface-var) !important; }
+.ts-color-primary   { color: var(--md-primary) !important; }
+.ts-color-error     { color: var(--md-error) !important; }
+
+/* =============================================================
+   MD3 SURFACE CARDS
+   ============================================================= */
+.surf-card {
+    background: #fff;
+    border-radius: var(--shape-lg);
+    box-shadow: var(--md-elev-1);
+    border: none;
+}
+.surf-card--outlined {
+    background: #fff;
+    border-radius: var(--shape-lg);
+    border: 1px solid var(--md-outline-var);
+    box-shadow: none;
+}
+.surf-card--filled {
+    background: var(--md-surface-var);
+    border-radius: var(--shape-lg);
+    border: none;
+    box-shadow: none;
+}
+
+/* =============================================================
+   MD3 CHIPS
+   ============================================================= */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .1875rem .625rem;
+    border-radius: 8px;
+    font-size: .6875rem;
+    font-weight: 500;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    line-height: 1.4;
+    user-select: none;
+}
+.chip-primary   { background: var(--md-primary-cont);    color: var(--md-on-primary-cont); }
+.chip-error     { background: var(--md-error-cont);      color: var(--md-on-error-cont); }
+.chip-warning   { background: var(--md-warning-cont);    color: var(--md-on-warning-cont); }
+.chip-surface   { background: var(--md-surface-var);     color: var(--md-on-surface-var); }
+.chip-info      { background: var(--md-info-cont);       color: var(--md-on-info-cont); }
+.chip-success   { background: var(--md-success-cont);    color: var(--md-on-success-cont); }
+/* Outlined chip: monospace for ID/code display */
+.chip-outlined  {
+    background: transparent;
+    border: 1px solid var(--md-outline-var);
+    color: var(--md-on-surface);
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    border-radius: 6px;
+    font-size: .75rem;
+    letter-spacing: .02em;
+    padding: .25rem .5rem;
+}
+
+/* =============================================================
+   MD3 ICON BUTTONS
+   ============================================================= */
+.btn-icon-md {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: background-color .15s, box-shadow .15s, color .15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-icon-md:focus-visible       { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+.btn-icon-md.sz-sm               { width: 28px; height: 28px; }
+
+.btn-icon-md.filled              { background: var(--md-primary); color: var(--md-on-primary); }
+.btn-icon-md.filled:hover        { background: #1255A6; box-shadow: var(--md-elev-1); color: var(--md-on-primary); }
+
+.btn-icon-md.t-secondary         { background: var(--md-success-cont); color: var(--md-on-success-cont); }
+.btn-icon-md.t-secondary:hover   { filter: brightness(.95); }
+
+.btn-icon-md.ghost               { background: transparent; color: var(--md-on-surface-var); border: 1.5px solid var(--md-outline-var); }
+.btn-icon-md.ghost:hover         { background: rgba(26,27,31,.06); border-color: var(--md-outline); color: var(--md-on-surface); }
+
+.btn-icon-md.ghost-primary       { background: transparent; color: var(--md-primary); border: 1.5px solid rgba(21,101,192,.3); }
+.btn-icon-md.ghost-primary:hover { background: var(--md-primary-cont); border-color: var(--md-primary); }
+
+.btn-icon-md.ghost-danger        { background: transparent; color: var(--md-error); border: 1.5px solid rgba(179,38,30,.25); }
+.btn-icon-md.ghost-danger:hover  { background: var(--md-error-cont); border-color: var(--md-error); }
+
+.btn-icon-md.flat                { background: transparent; color: var(--md-on-surface-var); border: none; }
+.btn-icon-md.flat:hover          { background: rgba(26,27,31,.08); color: var(--md-on-surface); }
+
+/* =============================================================
+   MD3 LABEL BUTTONS
+   ============================================================= */
+.btn-md {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .375rem;
+    padding: .5625rem 1.25rem;
+    border-radius: 100px;
+    font-size: .875rem;
+    font-weight: 500;
+    letter-spacing: .006em;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color .15s, box-shadow .15s, color .15s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1.25;
+}
+.btn-md:focus-visible             { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+/* Size modifier */
+.btn-md.sm                        { padding: .34375rem .875rem; font-size: .8125rem; }
+
+.btn-md.filled-primary            { background: var(--md-primary);      color: var(--md-on-primary); }
+.btn-md.filled-primary:hover      { background: #1255A6; box-shadow: var(--md-elev-1); color: var(--md-on-primary); }
+
+.btn-md.filled-error              { background: var(--md-error);         color: #fff; }
+.btn-md.filled-error:hover        { background: #99201A; color: #fff; }
+
+.btn-md.tonal-primary             { background: var(--md-primary-cont);  color: var(--md-on-primary-cont); }
+.btn-md.tonal-primary:hover       { filter: brightness(.96); box-shadow: var(--md-elev-1); }
+
+.btn-md.tonal-success             { background: var(--md-success-cont);  color: var(--md-on-success-cont); }
+.btn-md.tonal-success:hover       { filter: brightness(.96); box-shadow: var(--md-elev-1); }
+
+.btn-md.outlined                  { background: transparent; color: var(--md-on-surface-var); border: 1.5px solid var(--md-outline-var); }
+.btn-md.outlined:hover            { background: rgba(26,27,31,.06); border-color: var(--md-outline); color: var(--md-on-surface); }
+
+.btn-md.text-neutral              { background: transparent; color: var(--md-on-surface-var); }
+.btn-md.text-neutral:hover        { background: rgba(26,27,31,.06); color: var(--md-on-surface); }
+
+.btn-md.text-primary              { background: transparent; color: var(--md-primary); }
+.btn-md.text-primary:hover        { background: rgba(21,101,192,.08); color: var(--md-primary); }
+
+/* =============================================================
+   MD3 DATA TABLE
+   ============================================================= */
+.md-table { width: 100%; border-collapse: collapse; }
+.md-table thead th {
+    padding: .75rem 1rem;
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--md-on-surface-var);
+    background: #F8F9FF;
+    border-bottom: 1px solid var(--md-outline-var);
+    white-space: nowrap;
+}
+.md-table tbody tr {
+    border-bottom: 1px solid var(--md-outline-var);
+    transition: background .12s;
+}
+.md-table tbody tr:last-child { border-bottom: none; }
+.md-table tbody tr:hover      { background: rgba(21,101,192,.04); }
+.md-table tbody td            { padding: .75rem 1rem; vertical-align: middle; font-size: .8125rem; }
+
+/* Table horizontal-scroll wrapper with right-edge fade hint */
+.md-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+}
+.md-table-scroll::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,.85));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.md-table-scroll.is-scrollable::after { opacity: 1; }
+
+/* =============================================================
+   MD3 BANNERS (flash messages)
+   ============================================================= */
+.md-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .875rem 1.125rem;
+    border-radius: var(--shape-md);
+    margin-bottom: 1rem;
+    font-size: .875rem;
+    line-height: 1.5;
+}
+.md-banner-success {
+    background: var(--md-success-cont);
+    color: var(--md-on-success-cont);
+    border-left: 4px solid #1B5E20;
+}
+.md-banner-error {
+    background: var(--md-error-cont);
+    color: var(--md-on-error-cont);
+    border-left: 4px solid var(--md-error);
+}
+
+/* =============================================================
+   MD3 FILTER PANEL
+   ============================================================= */
+.filter-panel {
+    background: #fff;
+    border-radius: var(--shape-lg);
+    border: 1px solid var(--md-outline-var);
+    padding: 1rem 1.125rem;
+}
+.filter-label {
+    display: block;
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--md-on-surface-var);
+    margin-bottom: .25rem;
+}
+
+/* Search input with leading icon */
+.search-field       { position: relative; }
+.search-field__icon {
+    position: absolute;
+    left: .65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--md-on-surface-var);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 1;
+}
+.search-field input.form-control,
+.search-field input.form-control-sm { padding-left: 2.25rem; }
+
+/* =============================================================
+   MD3 DIALOG
+   ============================================================= */
+.md-dialog .modal-content {
+    border-radius: var(--shape-xl);
+    border: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,.12);
+}
+.md-dialog .modal-header { padding: 1.25rem 1.5rem .75rem; border-bottom: none; }
+.md-dialog .modal-title  { font-size: 1.125rem; font-weight: 600; color: var(--md-on-surface); }
+.md-dialog .modal-body   { padding: .375rem 1.5rem 1rem; color: var(--md-on-surface-var); font-size: .9375rem; line-height: 1.5; }
+.md-dialog .modal-footer { padding: .5rem 1.5rem 1.25rem; border-top: none; }
+
+/* =============================================================
+   MD3 PAGE HEADER
+   ============================================================= */
+.md-page-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.md-page-hdr__text h1 { margin: 0; }
+.md-page-hdr__actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+/* Status counter pill (page header badge) */
+.md-counter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4375rem 1rem;
+    border-radius: 100px;
+    border: 1px solid var(--md-outline-var);
+    background: #fff;
+    font-size: .8125rem;
+    font-weight: 500;
+    color: var(--md-on-surface);
+    box-shadow: var(--md-elev-1);
+    white-space: nowrap;
+}
+.md-counter-pill__dot              { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.md-counter-pill__dot--warning     { background: #BF360C; }
+.md-counter-pill__dot--error       { background: var(--md-error); }
+
+/* =============================================================
+   MD3 EMPTY STATE
+   ============================================================= */
+.md-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    gap: .75rem;
+    text-align: center;
+}
+.md-empty__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--md-surface-var);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-on-surface-var);
+    margin-bottom: .25rem;
+    flex-shrink: 0;
+}
+.md-empty__title {
+    font-size: .9375rem;
+    font-weight: 500;
+    color: var(--md-on-surface);
+    margin: 0;
+}
+.md-empty__body {
+    font-size: .8125rem;
+    color: var(--md-on-surface-var);
+    margin: 0;
+    max-width: 320px;
+}
+
+/* =============================================================
+   MD3 PAGINATION
+   ============================================================= */
+.md-pagination {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    border-top: 1px solid var(--md-outline-var);
+}
+.md-pagination .pagination { gap: 2px; margin: 0; }
+.md-pagination .page-link {
+    border-radius: 50% !important;
+    width: 36px;
+    height: 36px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    padding: 0;
+    color: var(--md-on-surface-var);
+    font-size: .875rem;
+    font-weight: 500;
+    background: transparent;
+    transition: background .12s;
+    box-shadow: none !important;
+}
+.md-pagination .page-link:hover         { background: rgba(26,27,31,.08); color: var(--md-on-surface); }
+.md-pagination .page-item.active .page-link { background: var(--md-primary) !important; color: #fff !important; }
+.md-pagination .page-item.disabled .page-link { color: var(--md-on-surface-var); opacity: .38; }
+
+/* =============================================================
+   MD3 SNACKBAR
+   ============================================================= */
+.md-snack {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    z-index: 1090;
+    transform: translateX(-50%) translateY(80px);
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .875rem 1rem;
+    border-radius: 4px;
+    min-width: 260px;
+    max-width: 480px;
+    background: #313033;
+    color: #F4EFF4;
+    font-size: .875rem;
+    letter-spacing: .016em;
+    box-shadow: var(--md-elev-3);
+    transition: transform .25s cubic-bezier(.2,0,0,1), opacity .25s cubic-bezier(.2,0,0,1);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.md-snack--visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }

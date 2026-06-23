@@ -8,19 +8,38 @@ use App\Models\SendSample;
 use App\Models\Creator;
 
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\DB;
+
+use App\Exports\SkuExport;
+
+use Maatwebsite\Excel\Facades\Excel;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $startDate = null;
-        $endDate = null;
-        if ($request->filled('date_range')) {
-            $dates = explode(' - ', $request->date_range);
-            $startDate = $dates[0];
-            $endDate = $dates[1] ?? $startDate;
+        $today  = \Carbon\Carbon::today();
+        $period = $request->query('period', '7d');
+
+        if ($period === 'custom') {
+            $dateFrom = $request->query('date_from');
+            $dateTo   = $request->query('date_to');
+            $curStart = $dateFrom ? \Carbon\Carbon::parse($dateFrom) : $today->copy();
+            $curEnd   = $dateTo   ? \Carbon\Carbon::parse($dateTo)   : $today->copy();
+            $startFmt    = $curStart->locale('id')->isoFormat('D MMM YYYY');
+            $endFmt      = $curEnd->locale('id')->isoFormat('D MMM YYYY');
+            $periodLabel = $startFmt === $endFmt ? $startFmt : "{$startFmt} – {$endFmt}";
+        } else {
+            [$curStart, $curEnd, $periodLabel] = match ($period) {
+                '30d'     => [$today->copy()->subDays(29), $today->copy(), '30 hari terakhir'],
+                'kemarin' => [$today->copy()->subDay(), $today->copy()->subDay(), 'Kemarin'],
+                default   => [$today->copy()->subDays(6), $today->copy(), '7 hari terakhir'],
+            };
         }
+        $startDate     = $curStart->format('Y-m-d');
+        $endDate       = $curEnd->format('Y-m-d');
+        $currentPeriod = $period;
 
         $baseQuery = SendSample::filterDate($startDate, $endDate, 'deal_date');
         $totalPengeluaran = (clone $baseQuery)
@@ -33,11 +52,22 @@ class DashboardController extends Controller
         ];
         $allProducts = (clone $baseQuery)
             ->reorder()
-            ->select('products.sku_utama', DB::raw('SUM(send_sample.qty) as total_qty'))
+            ->select(
+                'products.sku_utama',
+                'products.harga',
+                DB::raw('SUM(send_sample.qty) as total_qty'),
+                DB::raw('SUM(send_sample.qty * products.harga) as total_pengeluaran')
+            )
             ->join('products', 'send_sample.product_id', '=', 'products.id')
-            ->groupBy('products.sku_utama')
+            ->groupBy('products.sku_utama', 'products.harga')
             ->orderByDesc('total_qty')
             ->get();
+
+        if ($request->has('export') && $request->export === 'sku') {
+            $filename = "Laporan_SKU_" . date('Ymd_His') . ".xlsx";
+            return Excel::download(new SkuExport($allProducts), $filename);
+        }
+
         $topUser = (clone $baseQuery)
             ->reorder()
             ->select('pic', DB::raw('COUNT(*) as total_dikirim'))
@@ -45,6 +75,7 @@ class DashboardController extends Controller
             ->orderByDesc('total_dikirim')
             ->with('user:id,name')
             ->get();
+
         $topCreator = (clone $baseQuery)
             ->reorder()
             ->select('creator_id', DB::raw('count(*) as total_dikirim'))
@@ -53,16 +84,12 @@ class DashboardController extends Controller
             ->limit(10)
             ->with('creator:id,username')
             ->get();
-        $creatorQuery = Creator::query();
-        if ($startDate && $endDate) {
-            $creatorQuery->filterDate($startDate, $endDate);
-        }
 
-        $totalCreator = (clone $creatorQuery)->count();
+        $creatorQuery = Creator::query();
+        $creatorQuery->filterDate($startDate, $endDate);
+
+        $totalCreator       = (clone $creatorQuery)->count();
         $creatorPerDayQuery = clone $creatorQuery;
-        if (!($startDate && $endDate)) {
-            $creatorPerDayQuery->recent(7);
-        }
 
         $creatorPerDay = $creatorPerDayQuery
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(id) as total_creator'))
@@ -78,7 +105,8 @@ class DashboardController extends Controller
 
         return view('admin.dashboard.index', compact(
             'stats', 'chartLabels', 'chartValues', 'allChartLabels', 'allChartValues',
-            'topUser', 'topCreator', 'creatorPerDay', 'totalCreator'
+            'topUser', 'topCreator', 'creatorPerDay', 'totalCreator', 'top10Products', 'allProducts',
+            'curStart', 'curEnd', 'currentPeriod', 'periodLabel'
         ));
     }
 }

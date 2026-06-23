@@ -6,10 +6,11 @@ use App\Models\Creator;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Http\Request;
 
-class CreatorsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class CreatorsExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithChunkReading
 {
     protected $request;
 
@@ -31,9 +32,9 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
 
         $query = Creator::query()
             ->with([
-                'contentStyles',
-                'categories',
-                'ages'
+                'contentStyles:id,name',
+                'categories:id,name',
+                'ages:id,name',
             ]);
 
         // Filter Umur
@@ -70,12 +71,12 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
         });
 
         // Filter Top Kreator
-        if ( $this->request->has('filter_top_creator')) {
+        if ($this->request->has('filter_top_creator')) {
             $query->where('top_creator', 1);
         }
 
         // Filter Kreator Diblokir
-        if ( $this->request->has('filter_is_blocked')) {
+        if ($this->request->has('filter_is_blocked')) {
             $query->where('is_blocked', 1);
         }
 
@@ -116,5 +117,30 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
             $creator->ages->pluck('name')->implode(', '),
             $creator->contentStyles->pluck('name')->implode(', '),
         ];
+    }
+
+    /**
+     * Lebar kolom tetap. Menggantikan ShouldAutoSize yang memindai seluruh sel
+     * (lambat pada ribuan baris) demi performa export.
+     */
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 22, // username
+            'B' => 14, // channel
+            'C' => 14, // gmv
+            'D' => 14, // itemsterjual
+            'E' => 16, // genderpengikut
+            'F' => 20, // namawa
+            'G' => 16, // nomerwa
+            'H' => 32, // kategori
+            'I' => 14, // umur
+            'J' => 26, // konten_style
+        ];
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000;
     }
 }

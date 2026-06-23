@@ -14,14 +14,12 @@ class FollowUpKontenController extends Controller
 {
     public function index(Request $request)
     {
-        // INPUT REQUEST
-        $search     = trim((string) $request->get('q', ''));
-        $sku_utama  = $request->get('sku_utama');
-        $startDate  = $request->get('start_date');
-        $endDate    = $request->get('end_date');
-        $user       = Auth::user();
+        $q        = trim((string) $request->get('q', ''));
+        $skuUtama = $request->get('sku_utama');
+        $startDate = $request->get('start_date');
+        $endDate   = $request->get('end_date');
+        $user      = Auth::user();
 
-        // QUERY
         $query = SendSample::query()->with([
             'creator',
             'store',
@@ -29,41 +27,27 @@ class FollowUpKontenController extends Controller
             'user'
         ]);
 
-        // FILTER ROLE
         if ($user->role !== 'super admin') {
             $query->byPic($user->id);
         }
 
-        // FILTER SKU UTAMA
-        if (!empty($sku_utama)) {
-            $query->whereHas('product', function($q) use ($sku_utama) {
-                $q->where('sku_utama', $sku_utama);
-            });
+        if (! empty($skuUtama)) {
+            $query->whereHas('product', fn ($sq) => $sq->where('sku_utama', $skuUtama));
         }
 
-        // FILTER TANGGAL
-        $query->when($startDate, function ($q) use ($startDate) {
-            $q->whereDate('tanggal_kirim', '>=', $startDate);
-        });
+        $query->when($startDate, fn ($sq) => $sq->where('tanggal_kirim', '>=', $startDate));
+        $query->when($endDate,   fn ($sq) => $sq->where('tanggal_kirim', '<=', $endDate));
 
-        $query->when($endDate, function ($q) use ($endDate) {
-            $q->whereDate('tanggal_kirim', '<=', $endDate);
-        });
-
-        // SEARCH, SORTING & PAGINATION
         $items = $query->pendingContent()
-            ->search($search)
+            ->search($q)
             ->where('status_chat', 1)
-            ->whereHas('creator', function ($q) {
-                $q->where('is_blocked', 0);
-            })
+            ->whereHas('creator', fn ($sq) => $sq->where('is_blocked', 0))
             ->orderByRaw('tanggal_aktual IS NULL, tanggal_aktual DESC')
             ->orderByRaw('deal_date IS NULL, deal_date DESC')
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
 
-        // OPSI SKU UTAMA
         $skuUtamaOptions = Product::select('sku_utama')
             ->whereNotNull('sku_utama')
             ->distinct()
@@ -72,9 +56,9 @@ class FollowUpKontenController extends Controller
 
         return view('admin.follow-up-konten.index', compact(
             'items',
-            'search',
+            'q',
             'skuUtamaOptions',
-            'sku_utama'
+            'skuUtama'
         ));
     }
 
@@ -108,5 +92,14 @@ class FollowUpKontenController extends Controller
         ]);
 
         return back()->with('success', 'Berhasil ditandai: Sudah Follow Up (mingguan).');
+    }
+
+    public function updateProductId(Request $request, SendSample $sendSample)
+    {
+        $request->validate(['seller_product_id' => 'required|string|max:255']);
+
+        $sendSample->update(['seller_product_id' => $request->seller_product_id]);
+
+        return back()->with('success', 'ID Produk berhasil diperbarui.');
     }
 }

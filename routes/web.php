@@ -19,6 +19,11 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/logout', 'logout')->name('logout');
 });
 
+// Root: arahkan ke dashboard bila login, jika tidak ke halaman login (hindari 404 di "/").
+Route::get('/', function () {
+    return redirect()->route(auth()->check() ? 'admin.dashboard.index' : 'login');
+});
+
 
 Route::middleware(['auth'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -26,6 +31,12 @@ Route::middleware(['auth'])->group(function () {
             ->name('kirim-sampel.update-pic-massal');
         Route::get('kirim-sampel/export', [KirimSampelController::class, 'export'])
             ->name('kirim-sampel.export');
+        Route::get('/kirim-sampel/template', [KirimSampelController::class, 'downloadTemplate'])
+            ->name('kirim-sampel.template');
+        Route::get('/kirim-sampel/search/creators', [KirimSampelController::class, 'searchCreators'])
+            ->name('kirim-sampel.search_creators');
+        Route::get('/kirim-sampel/search/products', [KirimSampelController::class, 'searchProducts'])
+            ->name('kirim-sampel.search_products');
         Route::post('/kirim-sampel/import', [KirimSampelController::class, 'import'])
             ->name('kirim-sampel.import');
         Route::delete('/kirim-sampel/bulk-destroy', [KirimSampelController::class, 'bulkDestroy'])
@@ -53,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('/follow-up-konten')->name('followup_konten.')->controller(FollowUpKontenController::class)->group(function () {
             Route::post('/{sendSample}/video-dibuat', 'storeVideoDibuat')->name('video_dibuat');
             Route::post('/{sendSample}/mark-mingguan', 'markFollowUpMingguan')->name('mark_mingguan');
+            Route::put('/{sendSample}/update-product-id', 'updateProductId')->name('update_product_id');
         });
 
 
@@ -62,6 +74,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('kreator.import');
         Route::get('kreator/export', [CreatorController::class, 'export'])
             ->name('kreator.export');
+        Route::get('/kreator/template', [CreatorController::class, 'downloadTemplate'])
+            ->name('kreator.template');
         Route::get('/kreator/check-username', [CreatorController::class, 'checkUsername'])
             ->name('kreator.check-username');
         Route::post('/kreator/auto-fill', [CreatorController::class, 'autoFill'])
@@ -84,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::prefix('product')->name('product.')->controller(ProductController::class)->group(function () {
             Route::get('/export', 'export')->name('export');
+            Route::get('/template', 'downloadTemplate')->name('template');
             Route::post('/import', 'import')->name('import');
             Route::delete('/bbulk-delete', 'bulkDestroy')->name('bulk_destroy');
         });
@@ -100,7 +115,6 @@ Route::middleware(['auth'])->group(function () {
             ->name('users.bulk_destroy');
         Route::resource('users', UserController::class);
     });
-
 
     Route::get('/follow-up-pengiriman', [FollowUpPengirimanController::class, 'index'])
         ->name('admin.followup.pengiriman.index');

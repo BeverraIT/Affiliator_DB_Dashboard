@@ -4,70 +4,135 @@
 @section('page', 'kirim-sampel-create')
 
 @push('styles')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    {{-- select2 (CSS + tema bootstrap-5) sudah dimuat global di layouts.admin --}}
+    <style>
+    /* ── MD3 Design Tokens ───────────────────────────────────── */
+
+    /* ── Type Scale ──────────────────────────────────────────── */
+    .ts-headline-sm { font-size: 1.5rem;  font-weight: 600; line-height: 2rem; }
+    .ts-body-sm     { font-size: .75rem;  font-weight: 400; line-height: 1rem; letter-spacing: .025em; }
+
+    /* ── Surface Card ────────────────────────────────────────── */
+    .surf-card { background: #fff; border-radius: var(--shape-lg); box-shadow: var(--md-elev-1); border: none; }
+
+    /* ── MD3 Buttons ─────────────────────────────────────────── */
+    .btn-md {
+        display: inline-flex; align-items: center; justify-content: center; gap: .375rem;
+        padding: .5625rem 1.25rem; border-radius: 20px;
+        font-size: .875rem; font-weight: 500;
+        border: none; cursor: pointer; text-decoration: none; transition: all .15s;
+    }
+    .btn-md:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+    .btn-md.filled-primary       { background: var(--md-primary); color: var(--md-on-primary); }
+    .btn-md.filled-primary:hover { background: #1255A6; box-shadow: 0 2px 8px rgba(21,101,192,.35); color: var(--md-on-primary); }
+    .btn-md.outlined             { background: transparent; color: var(--md-on-surface-var); border: 1.5px solid var(--md-outline-var); }
+    .btn-md.outlined:hover       { background: rgba(26,27,31,.06); border-color: var(--md-outline); color: var(--md-on-surface); }
+    .btn-md.text-neutral         { background: transparent; color: var(--md-on-surface-var); }
+    .btn-md.text-neutral:hover   { background: rgba(26,27,31,.06); }
+
+    /* ── Error Banner ────────────────────────────────────────── */
+    .md-banner-error {
+        display: flex; align-items: flex-start; gap: .75rem;
+        padding: .875rem 1.125rem; border-radius: var(--shape-md); margin-bottom: 1.25rem;
+        font-size: .875rem; line-height: 1.5;
+        background: var(--md-error-cont); color: var(--md-on-error-cont);
+        border-left: 4px solid var(--md-error);
+    }
+
+    /* ── Form field labels ───────────────────────────────────── */
+    .ks-field-label {
+        display: block; font-size: .75rem; font-weight: 500;
+        letter-spacing: .04em; color: var(--md-on-surface-var);
+        margin-bottom: .3rem;
+    }
+
+    /* ── Section heading inside card ─────────────────────────── */
+    .ks-section-title {
+        display: flex; align-items: center; gap: .5rem;
+        font-size: .75rem; font-weight: 700; letter-spacing: .08em;
+        text-transform: uppercase; color: var(--md-primary);
+        margin-bottom: 1rem; padding-bottom: .625rem;
+        border-bottom: 1px solid var(--md-outline-var);
+    }
+    .ks-section-title::before {
+        content: ''; display: inline-block; width: 8px; height: 8px;
+        border-radius: 50%; background: var(--md-primary); flex-shrink: 0;
+    }
+    </style>
 @endpush
 
 @section('content')
-    <div class="container" style="max-width: 1000px;">
+    <div style="max-width: 1000px;">
+        {{-- ── Page Header ─────────────────────────────────────── --}}
         <header class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 fw-bold mb-1 text-dark">Tambah Kirim Sampel</h1>
+                <h1 class="ts-headline-sm mb-0" style="color: var(--md-on-surface);">Tambah Kirim Sampel</h1>
             </div>
-            {{-- BUTTON KEMBALI --}}
-            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+            <a href="{{ url()->previous() }}" class="btn-md outlined">
+                <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M12 16l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 Kembali
             </a>
         </header>
 
+        {{-- ── Validation Errors ───────────────────────────────── --}}
         @if ($errors->any())
-            <div class="alert alert-danger py-2 mb-4 shadow-sm border-0">
-                <div class="fw-bold mb-1 d-flex align-items-center gap-2">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    Ada data yang belum valid
+            <div class="md-banner-error">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.1rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <div>
+                    <div class="fw-semibold mb-1">Ada data yang belum valid</div>
+                    <ul class="mb-0 ps-4" style="font-size:.8125rem;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
-                <ul class="mb-0 small ps-4">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
             </div>
         @endif
 
+        {{-- ── Form ────────────────────────────────────────────── --}}
         <form action="{{ route('admin.kirim-sampel.store') }}" method="POST" novalidate>
             @csrf
             <input type="hidden" name="redirect_to" value="{{ old('redirect_to', url()->previous()) }}">
+
             <div class="row g-4">
+                {{-- Left: Informasi Utama --}}
                 <div class="col-12 col-lg-7">
-                    <div class="card border-0 shadow-sm border-top border-3 border-primary h-100">
-                        <div class="card-body p-4">
-                            <h5 class="card-title mb-2 text-primary">Informasi Utama</h5>
+                    <div class="surf-card h-100">
+                        <div class="p-4">
+                            <div class="ks-section-title">Informasi Utama</div>
                             <div class="row g-3">
+
                                 {{-- Kreator --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="creator_id">Kreator <span class="text-danger">*</span></label>
-                                    <select name="creator_id" id="creator_id" class="form-select select2" required>
+                                    <label class="ks-field-label" for="creator_id">
+                                        Kreator <span style="color:var(--md-error);">*</span>
+                                    </label>
+                                    <select name="creator_id" id="creator_id" class="form-select select2-ajax" required
+                                        data-url="{{ route('admin.kirim-sampel.search_creators') }}"
+                                        data-placeholder="Cari kreator...">
                                         <option value=""></option>
-                                        @foreach($creators as $creator)
-                                            <option value="{{ $creator->id }}" @selected(old('creator_id') == $creator->id)>
-                                                {{ $creator->username }}
-                                            </option>
-                                        @endforeach
+                                        @if($selectedCreator)
+                                            <option value="{{ $selectedCreator->id }}" selected>{{ $selectedCreator->username }}</option>
+                                        @endif
                                     </select>
                                 </div>
 
                                 {{-- APPROVE --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="approve">APPROVE <span class="text-danger">*</span></label>
+                                    <label class="ks-field-label" for="approve">
+                                        Approve <span style="color:var(--md-error);">*</span>
+                                    </label>
                                     <select name="approve" id="approve" class="form-select select2" required>
-                                        <option value="{{ auth()->user()->id }}" selected>
-                                            {{ auth()->user()->name }} (Anda)
-                                        </option>
+                                        <option value="{{ auth()->user()->id }}" selected>{{ auth()->user()->name }} (Anda)</option>
                                         @foreach($users as $user)
                                             @if($user->id !== auth()->user()->id)
-                                                <option value="{{ $user->id }}" @selected(old('approve') == $user->id)>
-                                                    {{ $user->name }}
-                                                </option>
+                                                <option value="{{ $user->id }}" @selected(old('approve') == $user->id)>{{ $user->name }}</option>
                                             @endif
                                         @endforeach
                                     </select>
@@ -75,17 +140,15 @@
 
                                 {{-- PIC --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="pic">PIC <span class="text-danger">*</span></label>
+                                    <label class="ks-field-label" for="pic">
+                                        PIC <span style="color:var(--md-error);">*</span>
+                                    </label>
                                     <select name="pic" id="pic" class="form-select select2" required>
-                                        <option value="{{ auth()->user()->id }}" selected>
-                                            {{ auth()->user()->name }} (Anda)
-                                        </option>
-                                        @if(auth()->user()->role === 'super admin') 
+                                        <option value="{{ auth()->user()->id }}" selected>{{ auth()->user()->name }} (Anda)</option>
+                                        @if(auth()->user()->role === 'super admin')
                                             @foreach($users as $user)
                                                 @if($user->id !== auth()->user()->id)
-                                                    <option value="{{ $user->id }}" @selected(old('pic') == $user->id)>
-                                                        {{ $user->name }}
-                                                    </option>
+                                                    <option value="{{ $user->id }}" @selected(old('pic') == $user->id)>{{ $user->name }}</option>
                                                 @endif
                                             @endforeach
                                         @endif
@@ -94,94 +157,106 @@
 
                                 {{-- Toko --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="store_id">Toko <span class="text-danger">*</span></label>
+                                    <label class="ks-field-label" for="store_id">
+                                        Toko <span style="color:var(--md-error);">*</span>
+                                    </label>
                                     <select name="store_id" id="store_id" class="form-select select2" required>
                                         <option value=""></option>
                                         @foreach($stores as $store)
-                                            <option value="{{ $store->id }}" @selected(old('store_id') == $store->id)>
-                                                {{ $store->name }}
-                                            </option>
+                                            <option value="{{ $store->id }}" @selected(old('store_id') == $store->id)>{{ $store->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
 
                                 {{-- SKU --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="product_id">SKU <span class="text-danger">*</span></label>
-                                    <select name="product_id" id="product_id" class="form-select select2" required>
+                                    <label class="ks-field-label" for="product_id">
+                                        SKU <span style="color:var(--md-error);">*</span>
+                                    </label>
+                                    <select name="product_id" id="product_id" class="form-select select2-ajax" required
+                                        data-url="{{ route('admin.kirim-sampel.search_products') }}"
+                                        data-placeholder="Cari SKU...">
                                         <option value=""></option>
-                                        @foreach($products as $product)
-                                            <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>
-                                                {{ $product->sku }}
-                                            </option>
-                                        @endforeach
+                                        @if($selectedProduct)
+                                            <option value="{{ $selectedProduct->id }}" selected>{{ $selectedProduct->sku }}</option>
+                                        @endif
                                     </select>
                                 </div>
 
-                                {{-- Qty --}}
+                                {{-- Seller Product ID --}}
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label small fw-bold text-secondary" for="qty">Qty <span class="text-danger">*</span></label>
-                                    <input type="number" min="1" name="qty" id="qty" 
-                                        value="{{ old('qty', 1) }}" 
-                                        class="form-control" required>
+                                    <label class="ks-field-label" for="seller_product_id">Seller Product ID</label>
+                                    <input type="text" name="seller_product_id" id="seller_product_id"
+                                        value="{{ old('seller_product_id') }}"
+                                        class="form-control" placeholder="Masukkan ID Produk...">
                                 </div>
 
-                                {{-- Perjanjian LIVE --}}
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold text-secondary" for="perjanjian_livestream">Perjanjian Live</label>
-                                    <input type="number" name="perjanjian_livestream" id="perjanjian_livestream" 
-                                        value="{{ old('perjanjian_livestream') }}" 
-                                        class="form-control" placeholder="0">
+                                {{-- Qty --}}
+                                <div class="col-12 col-md-4">
+                                    <label class="ks-field-label" for="qty">
+                                        Qty <span style="color:var(--md-error);">*</span>
+                                    </label>
+                                    <input type="number" min="1" name="qty" id="qty"
+                                        value="{{ old('qty', 1) }}" class="form-control" required>
+                                </div>
+
+                                {{-- Perjanjian Live --}}
+                                <div class="col-12 col-md-4">
+                                    <label class="ks-field-label" for="perjanjian_livestream">Perjanjian Live</label>
+                                    <input type="number" name="perjanjian_livestream" id="perjanjian_livestream"
+                                        value="{{ old('perjanjian_livestream') }}" class="form-control" placeholder="0">
                                 </div>
 
                                 {{-- Perjanjian Video --}}
-                                <div class="col-6">
-                                    <label class="form-label small fw-bold text-secondary" for="perjanjian_video">Perjanjian Video</label>
-                                    <input type="number" name="perjanjian_video" id="perjanjian_video" 
-                                        value="{{ old('perjanjian_video') }}" 
-                                        class="form-control" placeholder="0">
+                                <div class="col-12 col-md-4">
+                                    <label class="ks-field-label" for="perjanjian_video">Perjanjian Video</label>
+                                    <input type="number" name="perjanjian_video" id="perjanjian_video"
+                                        value="{{ old('perjanjian_video') }}" class="form-control" placeholder="0">
                                 </div>
+
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- Right: Timeline --}}
                 <div class="col-12 col-lg-5">
-                    <div class="card border-0 shadow-sm h-100">
-                        <div class="card-body p-4 d-flex flex-column">
-                            <h5 class="card-title mb-2 text-primary">Timeline Pengiriman</h5>
+                    <div class="surf-card h-100">
+                        <div class="p-4 d-flex flex-column h-100">
+                            <div class="ks-section-title">Timeline Pengiriman</div>
                             <div class="row g-3">
-                                {{-- TANGGAL DEAL --}}
+
+                                {{-- Tanggal Deal --}}
                                 <div class="col-12">
-                                    <label class="form-label small fw-bold text-secondary" for="deal_date">Tanggal Deal</label>
-                                    <input type="date" name="deal_date" id="deal_date" 
-                                        value="{{ old('deal_date') }}" 
-                                        class="form-control">
+                                    <label class="ks-field-label" for="deal_date">Tanggal Deal</label>
+                                    <input type="date" name="deal_date" id="deal_date"
+                                        value="{{ old('deal_date') }}" class="form-control">
                                 </div>
 
-                                {{-- TANGGAL KIRIM --}}
+                                {{-- Tanggal Kirim --}}
                                 <div class="col-12">
-                                    <label class="form-label small fw-bold text-secondary" for="tanggal_kirim">Tanggal Kirim</label>
-                                    <input type="date" name="tanggal_kirim" id="tanggal_kirim" 
-                                        value="{{ old('tanggal_kirim') }}" 
-                                        class="form-control">
+                                    <label class="ks-field-label" for="tanggal_kirim">Tanggal Kirim</label>
+                                    <input type="date" name="tanggal_kirim" id="tanggal_kirim"
+                                        value="{{ old('tanggal_kirim') }}" class="form-control">
                                 </div>
 
-                                {{-- ID PESANAN --}}
+                                {{-- ID Pesanan --}}
                                 <div class="col-12">
-                                    <label class="form-label small fw-bold text-secondary" for="id_pesanan">ID Pesanan</label>
-                                    <input type="text" name="id_pesanan" id="id_pesanan" 
-                                        value="{{ old('id_pesanan') }}" 
+                                    <label class="ks-field-label" for="id_pesanan">ID Pesanan</label>
+                                    <input type="text" name="id_pesanan" id="id_pesanan"
+                                        value="{{ old('id_pesanan') }}"
                                         class="form-control" placeholder="Masukkan nomor ID Pesanan..." autocomplete="off">
                                 </div>
+
                             </div>
 
-                            {{-- BUTTON BATAL & SIMPAN --}}
+                            {{-- Action Buttons --}}
                             <div class="mt-auto pt-4 d-flex justify-content-end gap-2">
-                                <a href="{{ old('previous_url', url()->previous()) }}" class="btn btn-outline-secondary">
-                                    Batal
-                                </a>
-                                <button type="submit" class="btn btn-primary px-4">
+                                <a href="{{ old('previous_url', url()->previous()) }}" class="btn-md text-neutral">Batal</a>
+                                <button type="submit" class="btn-md filled-primary">
+                                    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 13l4 4L16 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
                                     Simpan
                                 </button>
                             </div>
@@ -194,15 +269,33 @@
 @endsection
 
 @push('scripts')
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- jQuery & select2 sudah dimuat global di layouts.admin --}}
     <script>
         $(document).ready(function() {
             $('.select2').select2({
-                theme: "bootstrap-5",
+                theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: $(this).data('placeholder'),
                 allowClear: true
+            });
+
+            // Dropdown besar (kreator & produk): pencarian server-side via AJAX
+            $('.select2-ajax').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: $(this).data('placeholder'),
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: $(this).data('url'),
+                        dataType: 'json',
+                        delay: 250,
+                        data: params => ({ q: params.term }),
+                        processResults: data => ({ results: data.results }),
+                        cache: true
+                    }
+                });
             });
         });
     </script>

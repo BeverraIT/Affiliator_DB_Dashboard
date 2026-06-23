@@ -3,500 +3,1136 @@
 @section('title', 'Dashboard')
 
 @push('styles')
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* =========================================================
+           MATERIAL DESIGN 3 — COLOR TOKENS
+        ========================================================= */
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
+            background-color: #F0F2F5;
+            color: var(--md-on-surface);
         }
 
-        .card-stat {
-            transition: all 0.3s ease;
-            border: 1px solid #eef2f6;
-            border-radius: 12px;
-            background: #fff;
+        /* =========================================================
+           MD3 TYPE SCALE
+        ========================================================= */
+        .ts-headline-sm  { font-size: 1.5rem;    font-weight: 600; line-height: 2rem;    letter-spacing: 0; }
+        .ts-title-lg     { font-size: 1.125rem;  font-weight: 500; line-height: 1.75rem; letter-spacing: 0; }
+        .ts-title-md     { font-size: 1rem;      font-weight: 500; line-height: 1.5rem;  letter-spacing: .009em; }
+        .ts-title-sm     { font-size: .875rem;   font-weight: 500; line-height: 1.25rem; letter-spacing: .007em; }
+        .ts-body-md      { font-size: .875rem;   font-weight: 400; line-height: 1.25rem; letter-spacing: .016em; }
+        .ts-body-sm      { font-size: .75rem;    font-weight: 400; line-height: 1rem;    letter-spacing: .025em; }
+        .ts-label-lg     { font-size: .875rem;   font-weight: 500; letter-spacing: .007em; }
+        .ts-label-md     { font-size: .75rem;    font-weight: 500; letter-spacing: .05em; }
+        .ts-label-sm     { font-size: .6875rem;  font-weight: 500; letter-spacing: .06em; }
+
+        /* =========================================================
+           SURFACE CARD
+        ========================================================= */
+        .surf-card {
+            background: #FFFFFF;
+            border-radius: var(--shape-lg);
+            box-shadow: var(--md-elev-1);
+            border: none;
+            transition: box-shadow .2s ease;
+        }
+        .surf-card:hover { box-shadow: var(--md-elev-2); }
+
+        /* =========================================================
+           STAT CARDS — MD3 "Filled Tonal" style
+        ========================================================= */
+        .stat-card {
+            border-radius: var(--shape-xl);
+            padding: 1.375rem 1.5rem 1.25rem;
+            position: relative;
             overflow: hidden;
+            transition: box-shadow .2s ease, transform .2s ease;
+            box-shadow: var(--md-elev-1);
+        }
+        .stat-card::after {
+            /* MD3 state layer (hover) */
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: transparent;
+            transition: background .15s;
+        }
+        .stat-card:hover::after { background: rgba(0,0,0,.04); }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--md-elev-2); }
+
+        /* colour variants */
+        .stat-card.sc-primary   { background: var(--md-primary-container); }
+        .stat-card.sc-secondary { background: var(--md-secondary-cont); }
+        .stat-card.sc-tertiary  { background: var(--md-tertiary-cont); }
+        .stat-card.sc-error     { background: var(--md-error-cont); }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: var(--shape-md);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .stat-card.sc-primary   .stat-icon { background: rgba(21,101,192,.14);  color: var(--md-primary); }
+        .stat-card.sc-secondary .stat-icon { background: rgba(27,94,32,.14);    color: var(--md-secondary); }
+        .stat-card.sc-tertiary  .stat-icon { background: rgba(106,27,154,.14);  color: var(--md-tertiary); }
+        .stat-card.sc-error     .stat-icon { background: rgba(179,38,30,.14);   color: var(--md-error); }
+
+        .stat-label { font-size: .6875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .25rem; }
+        .stat-card.sc-primary   .stat-label { color: var(--md-on-primary-cont); opacity: .75; }
+        .stat-card.sc-secondary .stat-label { color: var(--md-on-secondary-cont); opacity: .75; }
+        .stat-card.sc-tertiary  .stat-label { color: var(--md-on-tertiary-cont); opacity: .75; }
+        .stat-card.sc-error     .stat-label { color: var(--md-on-error-cont); opacity: .75; }
+
+        .stat-value {
+            font-size: 2rem; font-weight: 700; line-height: 1.15;
+            letter-spacing: -.025em; margin-bottom: .25rem;
+        }
+        .stat-card.sc-primary   .stat-value { color: var(--md-on-primary-cont); }
+        .stat-card.sc-secondary .stat-value { color: var(--md-on-secondary-cont); }
+        .stat-card.sc-tertiary  .stat-value { color: var(--md-on-tertiary-cont); }
+        .stat-card.sc-error     .stat-value { color: var(--md-on-error-cont); }
+
+        .stat-sub { font-size: .75rem; }
+        .stat-card.sc-primary   .stat-sub { color: var(--md-on-primary-cont); opacity: .6; }
+        .stat-card.sc-secondary .stat-sub { color: var(--md-on-secondary-cont); opacity: .6; }
+        .stat-card.sc-tertiary  .stat-sub { color: var(--md-on-tertiary-cont); opacity: .6; }
+        .stat-card.sc-error     .stat-sub { color: var(--md-on-error-cont); opacity: .6; }
+
+        /* =========================================================
+           CUSTOM DATE RANGE PICKER
+        ========================================================= */
+        .drp-trigger {
+            display: flex; align-items: center; gap: 6px;
+            padding: .375rem .875rem;
+            border: 1.5px solid #C4C6D0;
+            border-radius: 8px; background: #fff;
+            cursor: pointer; transition: border-color .12s;
+            white-space: nowrap; user-select: none;
+        }
+        .drp-trigger:hover { border-color: #74777F; }
+        .drp-trigger.open  { border: 2px solid #1565C0; padding: calc(.375rem - 0.5px) calc(.875rem - 0.5px); }
+
+        .drp-prefix {
+            font-size: .75rem; font-weight: 600;
+            color: #44464F; white-space: nowrap; flex-shrink: 0;
+        }
+        .drp-input-group { display: flex; align-items: center; gap: 3px; }
+        .drp-inp {
+            border: none; outline: none; background: transparent;
+            font-size: .8125rem; color: #1A1B1F;
+            cursor: pointer; width: 88px; text-align: center;
+            font-family: 'Inter', sans-serif;
+        }
+        .drp-inp::placeholder { color: #74777F; }
+        .drp-sep { font-size: .8125rem; color: #74777F; }
+        .drp-cal-icon { color: #74777F; display: flex; align-items: center; flex-shrink: 0; font-size: .875rem; }
+
+        .drp-panel {
+            position: absolute; right: 0; top: calc(100% + 6px);
+            background: #fff;
+            border: 1px solid #C4C6D0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.14);
+            z-index: 1050; display: flex; align-items: stretch;
+            overflow: hidden;
+        }
+        .drp-presets {
+            display: flex; flex-direction: column;
+            padding: 14px 10px; gap: 8px;
+            border-right: 1px solid #C4C6D0; flex-shrink: 0;
+        }
+        .drp-preset {
+            text-align: center; padding: 7px 14px;
+            font-size: .8125rem; font-weight: 500;
+            border: 1.5px solid #C4C6D0; background: #fff; color: #1A1B1F;
+            border-radius: 8px; cursor: pointer;
+            transition: all .12s; white-space: nowrap;
+            min-width: 148px; font-family: 'Inter', sans-serif;
+        }
+        .drp-preset:hover  { border-color: #1565C0; color: #1565C0; }
+        .drp-preset.active { border-color: #1565C0; color: #1565C0; background: rgba(21,101,192,.06); }
+
+        .drp-cal-area { padding: 14px 16px; min-width: 560px; }
+        .drp-cal-top  { display: flex; justify-content: center; margin-bottom: 12px; }
+        .drp-kustom {
+            padding: 5px 16px; font-size: .8125rem; font-weight: 500;
+            border: 1.5px solid #1565C0; background: #fff; color: #1565C0;
+            border-radius: 8px; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all .12s;
+        }
+        .drp-kustom:hover  { background: rgba(21,101,192,.06); }
+        .drp-kustom.active { background: rgba(21,101,192,.10); }
+        .drp-hint { font-size: .75rem; color: #44464F; margin-left: 10px; display: flex; align-items: center; }
+
+        .drp-cal-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+        .drp-cal-title {
+            flex: 1; text-align: center;
+            font-size: .9375rem; font-weight: 500; color: #1A1B1F;
+        }
+        .drp-cal-spacer { width: 56px; flex-shrink: 0; }
+        .drp-nav-btn {
+            width: 28px; height: 28px; border: none; background: transparent;
+            border-radius: 50%; cursor: pointer; font-size: 15px; line-height: 1;
+            color: #44464F; display: flex; align-items: center; justify-content: center;
+            transition: background .1s; flex-shrink: 0;
+        }
+        .drp-nav-btn:hover { background: #E1E2EC; color: #1A1B1F; }
+
+        .drp-months { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .drp-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px 0; }
+        .drp-day-head {
+            font-size: .6875rem; font-weight: 600; color: #44464F;
+            text-align: center; padding: 3px 0 7px;
+        }
+        .drp-day {
+            font-size: .8125rem; cursor: pointer; color: #1A1B1F;
+            height: 34px; display: flex; align-items: center; justify-content: center;
             position: relative;
         }
+        .drp-day-inner {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; position: relative; transition: background .1s;
+        }
+        .drp-day:hover:not(.other-month):not(.disabled) .drp-day-inner { background: #E1E2EC; }
+        .drp-day.other-month { color: #C4C6D0; cursor: default; }
+        .drp-day.disabled    { color: #C4C6D0; cursor: default; }
 
-        .card-stat:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px #0000000d !important;
-            border-color: #fff;
+        .drp-day.in-range    { background: rgba(21,101,192,.10); }
+        .drp-day.range-start { background: linear-gradient(to right, transparent 50%, rgba(21,101,192,.10) 50%); }
+        .drp-day.range-end   { background: linear-gradient(to left,  transparent 50%, rgba(21,101,192,.10) 50%); }
+        .drp-day.range-start.range-end { background: transparent; }
+
+        .drp-day.selected .drp-day-inner { background: #1565C0; color: #fff; font-weight: 600; }
+        .drp-day.selected:hover .drp-day-inner { background: #1565C0; }
+        .drp-day.today:not(.selected) .drp-day-inner::after {
+            content: ''; position: absolute; bottom: 2px; left: 50%;
+            transform: translateX(-50%); width: 4px; height: 4px;
+            border-radius: 50%; background: #1565C0;
+        }
+        .drp-day.selected.today .drp-day-inner::after {
+            content: ''; position: absolute; bottom: 2px; left: 50%;
+            transform: translateX(-50%); width: 4px; height: 4px;
+            border-radius: 50%; background: #fff;
         }
 
-        .border-left-primary { border-left: 4px solid #0d6efd; }
-        .border-left-success { border-left: 4px solid #198754; }
-        .border-left-danger  { border-left: 4px solid #dc3545; }
-        .border-left-purple  { border-left: 4px solid #6f42c1; }
-
-        .icon-box {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
+        /* =========================================================
+           ACTION BUTTONS
+        ========================================================= */
+        .btn-filled {
+            display: inline-flex; align-items: center; gap: .375rem;
+            padding: .5rem 1.25rem;
+            border-radius: 20px;
+            font-size: .8125rem; font-weight: 500;
+            border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+            transition: all .15s;
+        }
+        .btn-filled.primary {
+            background: var(--md-primary); color: var(--md-on-primary);
+        }
+        .btn-filled.primary:hover {
+            background: #1255A6;
+            box-shadow: 0 2px 8px rgba(21,101,192,.35);
         }
 
-        .card-chart {
-            border: 1px solid #eef2f6;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0 2px 10px #00000005;
+        .btn-tonal {
+            display: inline-flex; align-items: center; gap: .375rem;
+            padding: .5rem 1.125rem;
+            border-radius: 20px;
+            font-size: .8125rem; font-weight: 500;
+            border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+            transition: background .15s;
+        }
+        .btn-tonal.secondary {
+            background: var(--md-secondary-cont); color: var(--md-secondary);
+        }
+        .btn-tonal.secondary:hover { background: #B5D9B7; }
+
+        .btn-text {
+            display: inline-flex; align-items: center; gap: .375rem;
+            padding: .5rem .875rem;
+            border-radius: 20px;
+            font-size: .8125rem; font-weight: 500;
+            border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+            background: transparent;
+            transition: background .15s;
+        }
+        .btn-text.primary { color: var(--md-primary); }
+        .btn-text.primary:hover { background: rgba(21,101,192,.08); }
+
+        .btn-icon-ghost {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 1.5px solid var(--md-outline-var);
+            background: transparent; cursor: pointer;
+            color: var(--md-on-surface-var);
+            transition: all .15s; font-family: 'Inter', sans-serif;
+            font-size: .875rem;
+        }
+        .btn-icon-ghost:hover {
+            background: rgba(26,27,31,.06);
+            border-color: var(--md-outline);
+            color: var(--md-on-surface);
         }
 
-        .date-picker-wrapper {
-            background: #fff;
-            border: 1px solid #dee2e6;
+        /* =========================================================
+           SECTION HEADER
+        ========================================================= */
+        .sec-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+        .sec-title   { font-size: 1rem; font-weight: 600; color: var(--md-on-surface); margin-bottom: .1875rem; }
+        .sec-sub     { font-size: .75rem; color: var(--md-on-surface-var); }
+
+        .sec-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+
+        /* =========================================================
+           MD3 DATA TABLE
+        ========================================================= */
+        .md-table { width: 100%; border-collapse: collapse; }
+        .md-table thead th {
+            padding: .625rem 1rem;
+            font-size: .6875rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+            color: var(--md-on-surface-var);
+            background: #F8F9FF;
+            border-bottom: 1px solid var(--md-outline-var);
+        }
+        .md-table thead th:first-child { border-radius: var(--shape-sm) 0 0 0; }
+        .md-table thead th:last-child  { border-radius: 0 var(--shape-sm) 0 0; }
+        .md-table tbody tr { border-bottom: 1px solid var(--md-outline-var); transition: background .12s; }
+        .md-table tbody tr:last-child { border-bottom: none; }
+        .md-table tbody tr:hover { background: rgba(21,101,192,.04); }
+        .md-table tbody td { padding: .8125rem 1rem; font-size: .875rem; vertical-align: middle; }
+
+        /* =========================================================
+           RANK BADGES
+        ========================================================= */
+        .rank {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-size: .6875rem; font-weight: 700;
+        }
+        .rank-1 { background: #FFF3CD; color: #856404; }
+        .rank-2 { background: #E9ECEF; color: #495057; }
+        .rank-3 { background: #FFE8D6; color: #7D4F1E; }
+        .rank-n { background: var(--md-surface-var); color: var(--md-on-surface-var); }
+
+        /* =========================================================
+           PROGRESS BAR (inline relative indicator)
+        ========================================================= */
+        .prog-wrap {
+            height: 6px; border-radius: 3px;
+            background: var(--md-surface-var);
+            overflow: hidden; margin-top: .3125rem;
+        }
+        .prog-bar { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+        .prog-bar.primary   { background: var(--md-primary); }
+        .prog-bar.secondary { background: var(--md-secondary); }
+        .prog-bar.tertiary  { background: var(--md-tertiary); }
+        .prog-bar.warning   { background: #E65100; }
+        .prog-bar.danger    { background: var(--md-error); }
+
+        /* MD3 Linear Progress — thick variant for metric summary */
+        .prog-lg { height: 10px !important; border-radius: 5px !important; margin-top: 0 !important; }
+
+        /* =========================================================
+           CONTENT COMPLETION — Metric Summary Cards
+        ========================================================= */
+        .metric-card {
+            background: #FFFFFF;
+            border-radius: var(--shape-xl);
+            padding: 1.5rem;
+            box-shadow: var(--md-elev-1);
+            transition: box-shadow .2s ease, transform .2s ease;
+        }
+        .metric-card:hover { box-shadow: var(--md-elev-2); transform: translateY(-2px); }
+
+        .metric-rate {
+            font-size: 3rem; font-weight: 700; line-height: 1;
+            letter-spacing: -.04em;
+        }
+        .metric-rate.good    { color: var(--md-secondary); }
+        .metric-rate.average { color: #E65100; }
+        .metric-rate.low     { color: var(--md-error); }
+
+        /* =========================================================
+           STATUS CHIPS — MD3 Suggestion Chip variant
+        ========================================================= */
+        .status-chip {
+            display: inline-flex; align-items: center; gap: .3125rem;
+            padding: .25rem .6875rem;
             border-radius: 8px;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 5px #00000005;
+            font-size: .6875rem; font-weight: 600;
+            letter-spacing: .03em; white-space: nowrap;
+        }
+        .status-chip .dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+        }
+        .status-chip.done    { background: var(--md-secondary-cont); color: var(--md-secondary); }
+        .status-chip.done    .dot { background: var(--md-secondary); }
+        .status-chip.ongoing { background: #FFF3E0; color: #E65100; }
+        .status-chip.ongoing .dot { background: #E65100; }
+        .status-chip.pending { background: var(--md-error-cont); color: var(--md-error); }
+        .status-chip.pending .dot { background: var(--md-error); }
+
+        /* =========================================================
+           RATE BADGE (inline percentage in table)
+        ========================================================= */
+        .rate-badge {
+            display: inline-flex; align-items: center;
+            padding: .125rem .4375rem;
+            border-radius: 6px;
+            font-size: .6875rem; font-weight: 700;
+            letter-spacing: .02em;
+        }
+        .rate-badge.good    { background: var(--md-secondary-cont); color: var(--md-secondary); }
+        .rate-badge.average { background: #FFF3E0; color: #E65100; }
+        .rate-badge.low     { background: var(--md-error-cont); color: var(--md-error); }
+        .rate-badge.none    { background: var(--md-surface-var); color: var(--md-on-surface-var); }
+
+        /* =========================================================
+           AVATAR ICON (for table rows)
+        ========================================================= */
+        .av-icon {
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .flatpickr-input {
+        /* =========================================================
+           EMPTY STATE
+        ========================================================= */
+        .empty-state {
+            text-align: center; padding: 2.5rem 1rem;
+            color: var(--md-on-surface-var);
+        }
+        .empty-state .bi { font-size: 2rem; display: block; margin-bottom: .5rem; opacity: .4; }
+
+        /* =========================================================
+           SCROLLBAR
+        ========================================================= */
+        .table-responsive::-webkit-scrollbar { height: 4px; }
+        .table-responsive::-webkit-scrollbar-track { background: transparent; }
+        .table-responsive::-webkit-scrollbar-thumb { background: var(--md-outline-var); border-radius: 2px; }
+
+        /* =========================================================
+           MODAL OVERRIDES
+        ========================================================= */
+        .modal-content {
+            border-radius: var(--shape-xl) !important;
             border: none !important;
-            background: transparent !important;
-            padding-left: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.16);
         }
-        .flatpickr-input:focus { outline: none; }
-
-        .btn-white {
-            background: #fff;
-            color: #6c757d;
-            font-weight: 500;
-        }
-        .btn-white:hover {
-            background: #f8f9fa;
-            color: #0d6efd;
-        }
-        .ls-1 { letter-spacing: 0.5px; }
+        .modal-header { border-bottom: 1px solid var(--md-outline-var) !important; }
+        .modal-footer { border-top:  1px solid var(--md-outline-var) !important; }
     </style>
 @endpush
 
 @section('content')
-    <div class="container-fluid px-4 py-4">
-        {{-- FILTER --}}
-        <form action="{{ url()->current() }}" method="GET" id="filterForm">
-            <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center mb-4 gap-3">
-                <div>
-                    <h1 class="h4 text-dark fw-bold mb-1">Dashboard Overview</h1>
-                    <p class="text-muted small mb-0">Pantau performa kreator dan distribusi sampel Anda.</p>
-                </div>
+<div class="py-4">
 
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    {{-- YESTERDAY // 7 DAYS // 30 DAYS  --}}
-                    <div class="btn-group shadow-sm" role="group">
-                        <button type="button" class="btn btn-white btn-sm border" onclick="setQuickDate('yesterday')">Kemarin</button>
-                        <button type="button" class="btn btn-white btn-sm border" onclick="setQuickDate('7days')">7 Hari</button>
-                        <button type="button" class="btn btn-white btn-sm border" onclick="setQuickDate('30days')">30 Hari</button>
-                    </div>
-
-                    {{-- RANGE PICKER --}}
-                    <div class="d-flex align-items-center bg-white p-1 rounded-3 shadow-sm border">
-                        <div class="date-picker-wrapper" style="border: none; box-shadow: none;">
-                            <span class="ps-2 text-muted"><i class="bi bi-calendar4-week"></i></span>
-                            <input type="text" class="form-control form-control-sm flatpickr-input" 
-                                style="width: 200px;"
-                                id="date_range" name="date_range" 
-                                placeholder="Pilih Periode..."
-                                value="{{ request('date_range') }}" readonly>
-                        </div>
-                        <div class="d-flex gap-1 pe-1">
-                            <button type="submit" class="btn btn-primary btn-sm px-3">Terapkan</button>
-                            @if(request('date_range'))
-                                <a href="{{ url()->current() }}" class="btn btn-light btn-sm border text-muted"><i class="bi bi-x-lg"></i></a>
-                            @endif
-                        </div>
-                    </div>
-                </div>
+    @if(($stats->totalSampel ?? 0) == 0)
+        <div class="d-flex align-items-start gap-2 mb-4" role="status"
+             style="padding:.875rem 1.125rem;border-radius:var(--shape-md);background:var(--md-tertiary-cont);color:var(--md-on-tertiary-cont);border-left:4px solid var(--md-tertiary);">
+            <i class="bi bi-info-circle-fill" style="margin-top:.1rem;"></i>
+            <div style="font-size:.8125rem;line-height:1.5;">
+                Tidak ada data sampel untuk periode <strong>{{ $periodLabel }}</strong>.
+                Coba pilih rentang tanggal yang lebih luas atau periode lain.
             </div>
-        </form>
+        </div>
+    @endif
 
-        {{-- STATS CARDS --}}
-        <div class="row g-4 mb-4">
-            {{-- TOTAL KREATOR --}}
-            <div class="col-12 col-md-4">
-                <div class="card card-stat border-left-primary h-100 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-uppercase text-muted fw-bold small mb-1 ls-1">Total Kreator</p>
-                                <h3 class="fw-bold text-dark mb-0">{{ number_format($totalCreator ?? 0) }}</h3>
-                            </div>
-                            <div class="icon-box bg-primary bg-opacity-10 text-primary">
-                                <i class="bi bi-person-video2 fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
+    {{-- ============================================================
+         PAGE HEADER + FILTERS
+    ============================================================ --}}
+    <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end mb-4 gap-3">
+
+        {{-- Title --}}
+        <div>
+            <p class="ts-label-sm mb-1" style="color:var(--md-on-surface-var);letter-spacing:.1em;text-transform:uppercase;">Overview</p>
+            <h1 class="ts-headline-sm mb-1" style="color:var(--md-on-surface);">Dashboard</h1>
+            <p class="ts-body-sm" style="color:var(--md-on-surface-var);">
+                Pantau performa kreator, distribusi sampel, dan pengeluaran Anda.
+            </p>
+        </div>
+
+        {{-- Date Range Picker --}}
+        <div style="position:relative" id="drp-wrap">
+            {{-- Trigger --}}
+            <div id="drp-trigger" class="drp-trigger" onclick="drpToggle()">
+                <span class="drp-prefix" id="drp-prefix">{{ $currentPeriod === 'custom' ? 'Kustom' : $periodLabel }}:</span>
+                <div class="drp-input-group">
+                    <input id="drp-from" class="drp-inp" readonly
+                           value="{{ $curStart->format('M d, Y') }}"
+                           placeholder="Tanggal mulai">
+                    <span class="drp-sep">–</span>
+                    <input id="drp-to" class="drp-inp" readonly
+                           value="{{ $curEnd->format('M d, Y') }}"
+                           placeholder="Tanggal akhir">
                 </div>
+                <span class="drp-cal-icon">
+                    <i class="bi bi-calendar4-range"></i>
+                </span>
             </div>
 
-            {{-- SAMPEL DIKIRIM  --}}
-            <div class="col-12 col-md-4">
-                <div class="card card-stat border-left-success h-100 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-uppercase text-muted fw-bold small mb-1 ls-1">Sampel Dikirim</p>
-                                <h3 class="fw-bold text-dark mb-0">
-                                    {{ number_format($stats->totalSampel ?? 0) }}
-                                </h3>
-                            </div>
-                            <div class="icon-box bg-success bg-opacity-10 text-success">
-                                <i class="bi bi-box-seam fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
+            {{-- Panel --}}
+            <div id="drp-panel" class="drp-panel" style="display:none">
+                {{-- Kiri: presets --}}
+                <div class="drp-presets">
+                    <button type="button" class="drp-preset {{ $currentPeriod === 'kemarin' ? 'active' : '' }}"
+                            onclick="drpPreset('kemarin')">Kemarin</button>
+                    <button type="button" class="drp-preset {{ $currentPeriod === '7d' ? 'active' : '' }}"
+                            onclick="drpPreset('7d')">7 Hari Terakhir</button>
+                    <button type="button" class="drp-preset {{ $currentPeriod === '30d' ? 'active' : '' }}"
+                            onclick="drpPreset('30d')">30 Hari Terakhir</button>
                 </div>
-            </div>
 
-            {{-- PENGELUARAN --}}
-            <div class="col-12 col-md-4">
-                <div class="card card-stat border-left-danger h-100 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="text-uppercase text-muted fw-bold small mb-1 ls-1">Pengeluaran</p>
-                                <h3 class="fw-bold text-dark mb-0">{{ number_format($stats->totalPengeluaran ?? 0, 0, ',', '.') }}</h3>
-                            </div>
-                            <div class="icon-box bg-danger bg-opacity-10 text-danger">
-                                <i class="bi bi-wallet2 fs-4"></i>
-                            </div>
-                        </div>
+                {{-- Kanan: kalender --}}
+                <div class="drp-cal-area">
+                    <div class="drp-cal-top">
+                        <button type="button" id="drp-kustom-btn"
+                                class="drp-kustom {{ $currentPeriod === 'custom' ? 'active' : '' }}"
+                                onclick="drpClearPick()">Kustom</button>
+                        <span class="drp-hint" id="drp-hint"></span>
+                    </div>
+                    <div class="drp-cal-nav">
+                        <button type="button" onclick="drpNavMonth(-12)" class="drp-nav-btn" title="Tahun sebelumnya">&#171;</button>
+                        <button type="button" onclick="drpNavMonth(-1)"  class="drp-nav-btn" title="Bulan sebelumnya">&#8249;</button>
+                        <span id="drp-cal-lbl-l" class="drp-cal-title"></span>
+                        <span class="drp-cal-spacer"></span>
+                        <span id="drp-cal-lbl-r" class="drp-cal-title"></span>
+                        <button type="button" onclick="drpNavMonth(1)"   class="drp-nav-btn" title="Bulan berikutnya">&#8250;</button>
+                        <button type="button" onclick="drpNavMonth(12)"  class="drp-nav-btn" title="Tahun berikutnya">&#187;</button>
+                    </div>
+                    <div class="drp-months">
+                        <div id="drp-month-l"></div>
+                        <div id="drp-month-r"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- ROW 1: CHART CREATOR PER DAY --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card card-chart p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h5 class="fw-bold text-dark mb-0">Jumlah Kreator</h5>
-                            <p class="text-muted small mb-0">
-                                {{ request('date_range') ? 'Periode: ' . request('date_range') : '7 Hari Terakhir' }}
-                            </p>
-                        </div>
-                        <span class="icon-box bg-purple bg-opacity-10 text-purple" style="width: 35px; height: 35px; color: #6f42c1;">
-                            <i class="bi bi-graph-up"></i>
-                        </span>
-                    </div>
-                    <div style="position: relative; height: 350px; width: 100%;">
-                        <canvas id="creatorTrendChart"></canvas>
-                    </div>
-                </div>
+    </div>
+
+    {{-- ============================================================
+         STAT CARDS
+    ============================================================ --}}
+    @php
+        $maxQty       = $top10Products->max('total_qty')        ?: 1;
+        $maxPengeluaran = $allProducts->max('total_pengeluaran') ?: 1;
+        $maxPic       = $topUser->max('total_dikirim')           ?: 1;
+        $maxCreator   = $topCreator->max('total_dikirim')        ?: 1;
+        $totalSKU     = $allProducts->count();
+    @endphp
+
+    <div class="row g-3 mb-4">
+        {{-- TOTAL KREATOR --}}
+        <div class="col-6 col-lg-3">
+            <div class="stat-card sc-primary h-100">
+                <div class="stat-icon"><i class="bi bi-person-video2"></i></div>
+                <div class="stat-label">Total Kreator</div>
+                <div class="stat-value">{{ number_format($totalCreator ?? 0) }}</div>
+                <div class="stat-sub">kreator terdaftar</div>
             </div>
         </div>
 
-        {{-- ROW 2: TOP 10 SKU UTAMA (TABLE) --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card card-chart p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h5 class="fw-bold text-dark mb-1">TOP 10 SKU UTAMA</h5>
-                            <p class="text-muted small mb-0">Produk dengan volume pengiriman tertinggi.</p>
-                        </div>
-                        
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary bg-opacity-10 text-primary">By Volume</span>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAllSKU">
-                                <i class="bi bi-arrows-fullscreen me-1"></i> Lihat Semua
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60" class="text-center">No.</th>
-                                    <th>Nama SKU</th>
-                                    <th class="text-end">Total Qty Dikirim</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($chartLabels as $index => $label)
-                                    <tr>
-                                        <td class="text-center">
-                                            @if($index == 0)
-                                                <span class="badge bg-warning text-dark" style="width: 25px;">1</span>
-                                            @elseif($index == 1)
-                                                <span class="badge bg-secondary text-white" style="width: 25px;">2</span>
-                                            @elseif($index == 2)
-                                                <span class="badge bg-secondary text-white" style="width: 25px;">3</span>
-                                            @else
-                                                <span class="fw-bold text-muted small">{{ $index + 1 }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="icon-box bg-light text-muted me-3" style="width: 30px; height: 30px; border-radius: 6px;">
-                                                    <i class="bi bi-box-seam fs-6"></i>
-                                                </div>
-                                                <span class="fw-semibold text-dark">{{ $label }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-end">
-                                            <span class="fw-bold text-primary">{{ number_format($chartValues[$index] ?? 0) }}</span>
-                                            <span class="text-muted small ms-1">Pcs</span>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="text-center py-4 text-muted">Belum ada data produk untuk ditampilkan.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        {{-- SAMPEL DIKIRIM --}}
+        <div class="col-6 col-lg-3">
+            <div class="stat-card sc-secondary h-100">
+                <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-label">Sampel Dikirim</div>
+                <div class="stat-value">{{ number_format($stats->totalSampel ?? 0) }}</div>
+                <div class="stat-sub">total pengiriman</div>
             </div>
         </div>
 
-        <div class="modal fade" id="modalAllSKU" tabindex="-1" aria-labelledby="modalAllSKULabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold" id="modalAllSKULabel">Daftar Lengkap SKU Sampel</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="60" class="text-center">No.</th>
-                                        <th>Nama SKU</th>
-                                        <th class="text-end">Total Qty Dikirim</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($allChartLabels as $index => $label)
-                                        <tr>
-                                            <td class="text-center fw-bold text-muted small">{{ $index + 1 }}</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="icon-box bg-light text-muted me-3" style="width: 30px; height: 30px; border-radius: 6px;">
-                                                        <i class="bi bi-box-seam fs-6"></i>
-                                                    </div>
-                                                    <span class="fw-semibold text-dark">{{ $label }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-end">
-                                                <span class="fw-bold text-primary">{{ number_format($allChartValues[$index] ?? 0) }}</span>
-                                                <span class="text-muted small ms-1">Pcs</span>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="3" class="text-center py-4 text-muted">Belum ada data produk.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                    </div>
+        {{-- PENGELUARAN --}}
+        <div class="col-6 col-lg-3">
+            <div class="stat-card sc-error h-100">
+                <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+                <div class="stat-label">Pengeluaran</div>
+                <div class="stat-value" style="font-size:1.45rem;letter-spacing:-.015em;">
+                    Rp {{ number_format($stats->totalPengeluaran ?? 0, 0, ',', '.') }}
                 </div>
+                <div class="stat-sub">total nilai sampel</div>
             </div>
         </div>
 
-        {{-- ROW 3: TOP PIC TABLE --}}
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card card-chart p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h5 class="fw-bold text-dark mb-1">Sampel Dikirim Per PIC</h5>
-                            <p class="text-muted small mb-0">Daftar PIC yang paling aktif mengirimkan sampel.</p>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="80" class="text-center">No.</th>
-                                    <th>Nama PIC</th>
-                                    <th class="text-center">Total Sampel Dikirim</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($topUser as $index => $data)
-                                    <tr>
-                                        <td class="text-center">
-                                            @if($index == 0)
-                                                <span class="badge bg-warning text-dark"><i class="bi bi-trophy-fill"></i> 1</span>
-                                            @else
-                                                <span class="fw-bold text-muted">{{ $index + 1 }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="icon-box bg-primary bg-opacity-10 text-primary me-3" style="width: 35px; height: 35px;">
-                                                    <i class="bi bi-person-fill fs-6"></i>
-                                                </div>
-                                                <span class="fw-semibold text-dark">{{ $data->user->name ?? 'User Tidak Ditemukan' }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">
-                                                {{ number_format($data->total_dikirim) }} Sampel
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">Tidak ada data pengiriman dalam periode ini.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        {{-- PRODUK AKTIF (SKU) --}}
+        <div class="col-6 col-lg-3">
+            <div class="stat-card sc-tertiary h-100">
+                <div class="stat-icon"><i class="bi bi-tags-fill"></i></div>
+                <div class="stat-label">Produk Aktif</div>
+                <div class="stat-value">{{ number_format($totalSKU) }}</div>
+                <div class="stat-sub">varian SKU berbeda</div>
             </div>
         </div>
+    </div>
 
-        {{-- ROW 4: TOP CREATOR TABLE --}}
-        <div class="row">
-            <div class="col-12">
-                <div class="card card-chart p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h5 class="fw-bold text-dark mb-1">Top Kreator Performa</h5>
-                            <p class="text-muted small mb-0">Kreator dengan volume penerimaan sampel terbanyak.</p>
+    {{-- ============================================================
+         CREATOR TREND CHART
+    ============================================================ --}}
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="surf-card p-4">
+                <div class="sec-header">
+                    <div>
+                        <div class="sec-title">Tren Kreator Baru</div>
+                        <div class="sec-sub">
+                            {{ $periodLabel }}
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="80" class="text-center">Rank</th>
-                                    <th>Username Kreator</th>
-                                    <th class="text-center">Total Sampel Diterima</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($topCreator as $index => $creatorData)
-                                    <tr>
-                                        <td class="text-center">
-                                            @if($index == 0)
-                                                <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Best</span>
-                                            @else
-                                                <span class="fw-bold text-muted">{{ $index + 1 }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="icon-box bg-purple bg-opacity-10 text-purple me-3" style="width: 35px; height: 35px; color: #6f42c1; background-color: rgba(111, 66, 193, 0.1);">
-                                                    <i class="bi bi-camera-reels-fill fs-6"></i>
-                                                </div>
-                                                <div>
-                                                    <span class="fw-semibold text-dark">{{ $creatorData->creator->username ?? 'Unknown Creator' }}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="fw-bold text-primary">
-                                                {{ number_format($creatorData->total_dikirim) }}
-                                            </span>
-                                            <span class="text-muted small ms-1">Barang</span>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">Belum ada data kreator.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="sec-icon" style="background:var(--md-primary-container);color:var(--md-primary);">
+                        <i class="bi bi-graph-up-arrow"></i>
                     </div>
+                </div>
+                <div style="position:relative;height:275px;width:100%;">
+                    <canvas id="creatorTrendChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- ============================================================
+         TOP 10 SKU TABLE
+    ============================================================ --}}
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="surf-card p-4">
+                <div class="sec-header">
+                    <div>
+                        <div class="sec-title">Top 10 SKU Utama</div>
+                        <div class="sec-sub">Produk dengan volume pengiriman & pengeluaran tertinggi</div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <a href="{{ request()->fullUrlWithQuery(['export' => 'sku']) }}"
+                           class="btn-tonal secondary">
+                            <i class="bi bi-file-earmark-excel"></i> Export
+                        </a>
+                        <button type="button"
+                                class="btn-text primary"
+                                data-bs-toggle="modal" data-bs-target="#modalAllSKU">
+                            <i class="bi bi-arrows-fullscreen"></i> Lihat Semua
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="md-table">
+                        <thead>
+                            <tr>
+                                <th width="56" class="text-center">Rank</th>
+                                <th>Nama SKU</th>
+                                <th class="text-end" style="white-space:nowrap;">Harga Satuan</th>
+                                <th style="min-width:200px;">Total Qty</th>
+                                <th class="text-end" style="white-space:nowrap;">Total Pengeluaran</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($top10Products as $index => $product)
+                                @php $pct = $maxQty > 0 ? ($product->total_qty / $maxQty * 100) : 0; @endphp
+                                <tr>
+                                    <td class="text-center">
+                                        @if($index === 0)
+                                            <span class="rank rank-1"><i class="bi bi-trophy-fill" style="font-size:.5rem;"></i></span>
+                                        @elseif($index === 1)
+                                            <span class="rank rank-2">2</span>
+                                        @elseif($index === 2)
+                                            <span class="rank rank-3">3</span>
+                                        @else
+                                            <span class="rank rank-n">{{ $index + 1 }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="av-icon" style="width:32px;height:32px;border-radius:8px;background:var(--md-surface-var);color:var(--md-on-surface-var);font-size:.875rem;">
+                                                <i class="bi bi-box2"></i>
+                                            </div>
+                                            <span class="ts-title-sm" style="color:var(--md-on-surface);">{{ $product->sku_utama }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end ts-body-md" style="color:var(--md-on-surface-var);">
+                                        Rp {{ number_format($product->harga, 0, ',', '.') }}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span style="font-weight:600;color:var(--md-primary);min-width:44px;font-size:.875rem;">{{ number_format($product->total_qty) }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="prog-wrap"><div class="prog-bar primary" style="width:{{ $pct }}%;"></div></div>
+                                            </div>
+                                            <span class="ts-label-sm" style="color:var(--md-on-surface-var);">pcs</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end" style="font-weight:600;color:var(--md-error);font-size:.875rem;">
+                                        Rp {{ number_format($product->total_pengeluaran, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            Belum ada data produk untuk ditampilkan.
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ============================================================
+         PIC + CREATOR (2-column)
+    ============================================================ --}}
+    <div class="row g-3">
+
+        {{-- TOP PIC --}}
+        <div class="col-12 col-lg-6">
+            <div class="surf-card p-4 h-100">
+                <div class="sec-header">
+                    <div>
+                        <div class="sec-title">Performa PIC</div>
+                        <div class="sec-sub">PIC paling aktif mengirimkan sampel</div>
+                    </div>
+                    <div class="sec-icon" style="background:var(--md-primary-container);color:var(--md-primary);">
+                        <i class="bi bi-person-badge-fill"></i>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="md-table">
+                        <thead>
+                            <tr>
+                                <th width="48" class="text-center">#</th>
+                                <th>Nama PIC</th>
+                                <th style="min-width:150px;">Total Dikirim</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($topUser as $index => $data)
+                                @php $picPct = $maxPic > 0 ? ($data->total_dikirim / $maxPic * 100) : 0; @endphp
+                                <tr>
+                                    <td class="text-center">
+                                        @if($index === 0)
+                                            <span class="rank rank-1"><i class="bi bi-trophy-fill" style="font-size:.5rem;"></i></span>
+                                        @elseif($index === 1)
+                                            <span class="rank rank-2">2</span>
+                                        @elseif($index === 2)
+                                            <span class="rank rank-3">3</span>
+                                        @else
+                                            <span class="rank rank-n">{{ $index + 1 }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="av-icon" style="width:32px;height:32px;border-radius:50%;background:var(--md-primary-container);color:var(--md-primary);font-size:.875rem;">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <span class="ts-title-sm" style="color:var(--md-on-surface);">{{ $data->user->name ?? 'User Tidak Ditemukan' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span style="font-weight:600;color:var(--md-primary);min-width:36px;font-size:.875rem;">{{ number_format($data->total_dikirim) }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="prog-wrap"><div class="prog-bar primary" style="width:{{ $picPct }}%;"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            Tidak ada data PIC dalam periode ini.
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- TOP CREATOR --}}
+        <div class="col-12 col-lg-6">
+            <div class="surf-card p-4 h-100">
+                <div class="sec-header">
+                    <div>
+                        <div class="sec-title">Top Kreator</div>
+                        <div class="sec-sub">Kreator dengan penerimaan sampel terbanyak</div>
+                    </div>
+                    <div class="sec-icon" style="background:var(--md-tertiary-cont);color:var(--md-tertiary);">
+                        <i class="bi bi-camera-reels-fill"></i>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="md-table">
+                        <thead>
+                            <tr>
+                                <th width="48" class="text-center">#</th>
+                                <th>Username Kreator</th>
+                                <th style="min-width:150px;">Total Sampel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($topCreator as $index => $creatorData)
+                                @php $crPct = $maxCreator > 0 ? ($creatorData->total_dikirim / $maxCreator * 100) : 0; @endphp
+                                <tr>
+                                    <td class="text-center">
+                                        @if($index === 0)
+                                            <span class="rank rank-1"><i class="bi bi-star-fill" style="font-size:.5rem;"></i></span>
+                                        @elseif($index === 1)
+                                            <span class="rank rank-2">2</span>
+                                        @elseif($index === 2)
+                                            <span class="rank rank-3">3</span>
+                                        @else
+                                            <span class="rank rank-n">{{ $index + 1 }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="av-icon" style="width:32px;height:32px;border-radius:50%;background:var(--md-tertiary-cont);color:var(--md-tertiary);font-size:.875rem;">
+                                                <i class="bi bi-camera-reels-fill"></i>
+                                            </div>
+                                            <span class="ts-title-sm" style="color:var(--md-on-surface);">{{ $creatorData->creator->username ?? 'Unknown Creator' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span style="font-weight:600;color:var(--md-tertiary);min-width:36px;font-size:.875rem;">{{ number_format($creatorData->total_dikirim) }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="prog-wrap"><div class="prog-bar tertiary" style="width:{{ $crPct }}%;"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            Belum ada data kreator.
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {{-- /row PIC + Creator --}}
+
+</div>
+{{-- /py-4 --}}
+
+{{-- ============================================================
+     MODAL — DAFTAR LENGKAP SKU
+============================================================ --}}
+<div class="modal fade" id="modalAllSKU" tabindex="-1" aria-labelledby="modalAllSKULabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header px-4 py-3">
+                <h5 class="ts-title-md mb-0" id="modalAllSKULabel">Daftar Lengkap SKU Sampel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="md-table">
+                        <thead>
+                            <tr>
+                                <th width="56" class="text-center">No.</th>
+                                <th>Nama SKU</th>
+                                <th class="text-end">Harga</th>
+                                <th class="text-end">Total Qty</th>
+                                <th class="text-end">Total Pengeluaran</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allProducts as $index => $product)
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="rank rank-n">{{ $index + 1 }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="av-icon" style="width:28px;height:28px;border-radius:8px;background:var(--md-surface-var);color:var(--md-on-surface-var);font-size:.8rem;">
+                                                <i class="bi bi-box2"></i>
+                                            </div>
+                                            <span class="ts-title-sm" style="color:var(--md-on-surface);">{{ $product->sku_utama }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end ts-body-md" style="color:var(--md-on-surface-var);">
+                                        Rp {{ number_format($product->harga, 0, ',', '.') }}
+                                    </td>
+                                    <td class="text-end" style="font-weight:600;color:var(--md-primary);">
+                                        {{ number_format($product->total_qty) }} pcs
+                                    </td>
+                                    <td class="text-end" style="font-weight:600;color:var(--md-error);">
+                                        Rp {{ number_format($product->total_pengeluaran, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            Belum ada data produk.
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer px-4 py-3">
+                <button type="button" class="btn-filled primary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- 1. SETUP DATEPICKER ---
-            const fp = flatpickr("#date_range", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                altInput: true,
-                altFormat: "j F Y",
-                locale: "id",
-                defaultDate: "{{ request('date_range') }}"
-            });
+        document.addEventListener('DOMContentLoaded', function () {
 
-            window.setQuickDate = function(type) {
-                let start = new Date();
-                let end = new Date();
+            /* --------------------------------------------------
+               DATE RANGE PICKER
+            -------------------------------------------------- */
+            (function () {
+                const DAYS      = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+                const INIT_START = '{{ $curStart->format('Y-m-d') }}';
+                const INIT_END   = '{{ $curEnd->format('Y-m-d') }}';
 
-                if (type === 'yesterday') {
-                    start.setDate(start.getDate() - 1);
-                    end.setDate(end.getDate() - 1);
-                } else if (type === '7days') {
-                    start.setDate(start.getDate() - 7);
-                } else if (type === '30days') {
-                    start.setDate(start.getDate() - 30);
+                function parseLocal(iso) {
+                    const [y, m, d] = iso.split('-').map(Number);
+                    return new Date(y, m - 1, d);
+                }
+                const TODAY = new Date(); TODAY.setHours(0, 0, 0, 0);
+
+                let calLeft   = new Date(parseLocal(INIT_START)); calLeft.setDate(1);
+                let calRight  = new Date(calLeft.getFullYear(), calLeft.getMonth() + 1, 1);
+                let pickStart = null, pickEnd = null, hovDay = null;
+
+                const trigger = document.getElementById('drp-trigger');
+                const panel   = document.getElementById('drp-panel');
+                const lblL    = document.getElementById('drp-cal-lbl-l');
+                const lblR    = document.getElementById('drp-cal-lbl-r');
+                const kustom  = document.getElementById('drp-kustom-btn');
+
+                function fmtISO(d) {
+                    return d.getFullYear() + '-' +
+                           String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                           String(d.getDate()).padStart(2, '0');
+                }
+                function fmtDisplay(d) {
+                    const M = ['Jan','Feb','Mar','Apr','May','Jun',
+                               'Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return M[d.getMonth()] + ' ' + String(d.getDate()).padStart(2,'0') + ', ' + d.getFullYear();
                 }
 
-                const formatDate = (date) => {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return `${year}-${month}-${day}`;
+                function openPanel() {
+                    if (!(pickStart && !pickEnd)) {
+                        pickStart = parseLocal(INIT_START);
+                        pickEnd   = parseLocal(INIT_END);
+                    }
+                    hovDay = null;
+
+                    const startRef = pickStart || parseLocal(INIT_START);
+                    calLeft = new Date(startRef.getFullYear(), startRef.getMonth(), 1);
+
+                    if (pickStart && pickEnd) {
+                        const endMonth = new Date(pickEnd.getFullYear(), pickEnd.getMonth(), 1);
+                        calRight = endMonth.getTime() > calLeft.getTime()
+                            ? endMonth
+                            : new Date(calLeft.getFullYear(), calLeft.getMonth() + 1, 1);
+                    } else {
+                        calRight = new Date(calLeft.getFullYear(), calLeft.getMonth() + 1, 1);
+                    }
+
+                    renderCalendars();
+                    const hint = document.getElementById('drp-hint');
+                    if (hint) hint.textContent = (pickStart && !pickEnd) ? 'Pilih tanggal akhir' : '';
+                    panel.style.display = 'flex';
+                    trigger.classList.add('open');
+                }
+
+                function closePanel() {
+                    panel.style.display = 'none';
+                    trigger.classList.remove('open');
+                }
+
+                window.drpToggle = function () {
+                    panel.style.display === 'none' ? openPanel() : closePanel();
                 };
 
-                fp.setDate([formatDate(start), formatDate(end)]);
-                document.getElementById('filterForm').submit();
-            }
+                window.drpPreset = function (key) {
+                    kustom.classList.remove('active');
+                    closePanel();
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('period', key);
+                    params.delete('date_from');
+                    params.delete('date_to');
+                    window.location.href = '{{ route("admin.dashboard.index") }}?' + params.toString();
+                };
 
-            // --- 2. SETUP CHART: CREATOR TREND (LINE) ---
+                window.drpClearPick = function () {
+                    pickStart = null; pickEnd = null; hovDay = null;
+                    kustom.classList.add('active');
+                    const hint = document.getElementById('drp-hint');
+                    if (hint) hint.textContent = 'Pilih tanggal mulai';
+                    renderCalendars();
+                };
 
-            // Mengambil data dari variabel PHP creatorPerDay
-            const creatorRawData = @json($creatorPerDay);
+                window.drpNavMonth = function (delta) {
+                    calLeft  = new Date(calLeft.getFullYear(), calLeft.getMonth() + delta, 1);
+                    calRight = new Date(calLeft.getFullYear(), calLeft.getMonth() + 1, 1);
+                    renderCalendars();
+                };
 
-            // Mapping data untuk Chart JS
-            const creatorLabels = creatorRawData.map(item => {
-                const dateObj = new Date(item.date);
-                return dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-            });
-            const creatorValues = creatorRawData.map(item => item.total_creator);
+                function apply(start, end) {
+                    const s = start <= end ? start : end;
+                    const e = start <= end ? end   : start;
+                    document.getElementById('drp-prefix').textContent = 'Kustom:';
+                    document.getElementById('drp-from').value         = fmtDisplay(s);
+                    document.getElementById('drp-to').value           = fmtDisplay(e);
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('period',    'custom');
+                    params.set('date_from', fmtISO(s));
+                    params.set('date_to',   fmtISO(e));
+                    window.location.href = '{{ route("admin.dashboard.index") }}?' + params.toString();
+                }
 
-            const ctxCreator = document.getElementById('creatorTrendChart').getContext('2d');
-            new Chart(ctxCreator, {
+                function renderCalendars() {
+                    lblL.textContent = String(calLeft.getMonth() + 1).padStart(2,'0') + ' / ' + calLeft.getFullYear();
+                    lblR.textContent = String(calRight.getMonth() + 1).padStart(2,'0') + ' / ' + calRight.getFullYear();
+                    renderMonth(document.getElementById('drp-month-l'), calLeft);
+                    renderMonth(document.getElementById('drp-month-r'), calRight);
+                }
+
+                function renderMonth(el, monthDate) {
+                    const year  = monthDate.getFullYear();
+                    const month = monthDate.getMonth();
+                    const first = new Date(year, month, 1);
+                    const dow   = (first.getDay() + 6) % 7;
+                    const start = new Date(first); start.setDate(1 - dow);
+
+                    let html = '<div class="drp-month-grid">';
+                    DAYS.forEach(d => { html += `<div class="drp-day-head">${d}</div>`; });
+
+                    for (let i = 0; i < 42; i++) {
+                        const d = new Date(start); d.setDate(start.getDate() + i);
+                        const isOther    = d.getMonth() !== month;
+                        const isToday    = d.getTime() === TODAY.getTime();
+                        const isFuture   = d > TODAY;
+                        const isDisabled = isOther || isFuture;
+
+                        let a = pickStart, b = pickEnd || hovDay;
+                        if (a && b && a > b) { const t = a; a = b; b = t; }
+
+                        const isSel     = (pickStart && d.getTime() === pickStart.getTime()) ||
+                                          (pickEnd   && d.getTime() === pickEnd.getTime());
+                        const isInRange = a && b && d > a && d < b;
+                        const isRangeS  = a && b && d.getTime() === a.getTime();
+                        const isRangeE  = a && b && d.getTime() === b.getTime();
+
+                        let cls = 'drp-day';
+                        if (isOther)              cls += ' other-month';
+                        if (isFuture && !isOther) cls += ' disabled';
+                        if (isToday)              cls += ' today';
+                        if (isInRange && !isSel)  cls += ' in-range';
+                        if (isRangeS  && !isSel)  cls += ' range-start';
+                        if (isRangeE  && !isSel)  cls += ' range-end';
+                        if (isSel)                cls += ' selected';
+
+                        const iso   = fmtISO(d);
+                        const guard = isDisabled ? '' :
+                            `onclick="drpDayClick('${iso}')" onmouseenter="drpDayHover('${iso}')" onmouseleave="drpDayLeave()"`;
+                        html += `<div class="${cls}" ${guard}><span class="drp-day-inner">${d.getDate()}</span></div>`;
+                    }
+                    html += '</div>';
+                    el.innerHTML = html;
+                }
+
+                window.drpDayClick = function (iso) {
+                    const d    = parseLocal(iso);
+                    const hint = document.getElementById('drp-hint');
+                    if (!pickStart || (pickStart && pickEnd)) {
+                        pickStart = d; pickEnd = null; hovDay = null;
+                        kustom.classList.add('active');
+                        if (hint) hint.textContent = 'Pilih tanggal akhir';
+                        renderCalendars();
+                    } else {
+                        pickEnd = d;
+                        if (hint) hint.textContent = '';
+                        renderCalendars();
+                        apply(pickStart, pickEnd);
+                    }
+                };
+                window.drpDayHover = function (iso) {
+                    if (pickStart && !pickEnd) { hovDay = parseLocal(iso); renderCalendars(); }
+                };
+                window.drpDayLeave = function () {
+                    if (pickStart && !pickEnd) { hovDay = null; renderCalendars(); }
+                };
+
+                document.addEventListener('click', function (e) {
+                    if (!document.getElementById('drp-wrap').contains(e.target)) closePanel();
+                });
+            })();
+
+            /* --------------------------------------------------
+               CREATOR TREND LINE CHART
+            -------------------------------------------------- */
+            const raw    = @json($creatorPerDay);
+            const labels = raw.map(item => new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+            const values = raw.map(item => item.total_creator);
+
+            const canvas = document.getElementById('creatorTrendChart');
+            const ctx    = canvas.getContext('2d');
+
+            // MD3 primary gradient fill
+            const grad = ctx.createLinearGradient(0, 0, 0, 275);
+            grad.addColorStop(0, 'rgba(21, 101, 192, 0.20)');
+            grad.addColorStop(1, 'rgba(21, 101, 192, 0.01)');
+
+            new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: creatorLabels,
+                    labels,
                     datasets: [{
-                        label: 'Kreator',
-                        data: creatorValues,
-                        backgroundColor: 'rgba(111, 66, 193, 0.1)', 
-                        borderColor: '#6f42c1', 
-                        borderWidth: 2,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: '#6f42c1',
+                        label: 'Kreator Baru',
+                        data: values,
+                        backgroundColor: grad,
+                        borderColor: '#1565C0',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#1565C0',
+                        pointBorderWidth: 2,
                         pointRadius: 4,
-                        pointHoverRadius: 6,
+                        pointHoverRadius: 7,
+                        pointHoverBackgroundColor: '#1565C0',
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 2,
                         fill: true,
-                        tension: 0.4 
+                        tension: 0.4
                     }]
                 },
                 options: {
@@ -507,16 +1143,40 @@
                         tooltip: {
                             intersect: false,
                             mode: 'index',
+                            // MD3 tooltip: dark surface
+                            backgroundColor: '#1A1B1F',
+                            titleColor: '#E1E2EC',
+                            bodyColor: '#C4C6D0',
+                            padding: 12,
+                            cornerRadius: 8,
+                            borderColor: 'rgba(255,255,255,.08)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: ctx => ` ${ctx.parsed.y} kreator`
+                            }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 },
-                            grid: { borderDash: [2, 2] },
+                            ticks: {
+                                stepSize: 1,
+                                color: '#74777F',
+                                font: { size: 11, family: 'Inter' }
+                            },
+                            grid: {
+                                color: '#E1E2EC',
+                                lineWidth: 1
+                            },
+                            border: { display: false, dash: [4, 4] }
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: {
+                                color: '#74777F',
+                                font: { size: 11, family: 'Inter' }
+                            },
+                            border: { display: false }
                         }
                     }
                 }

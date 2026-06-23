@@ -5,7 +5,6 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -20,7 +19,6 @@ class SendSamplesExport extends DefaultValueBinder implements
     FromQuery,
     WithHeadings,
     WithMapping,
-    ShouldAutoSize,
     WithStyles,
     WithColumnFormatting,
     WithColumnWidths,
@@ -69,13 +67,13 @@ class SendSamplesExport extends DefaultValueBinder implements
 
         return [
             $this->formatDate($row->deal_date),
-            $row->user->name ?? '-',
-            $row->approver->name ?? '-',
-            $row->store->name ?? '-',
-            $row->creator->username ?? $row->creator->name ?? '-',
+            $row->user?->name ?? '-',
+            $row->approver?->name ?? '-',
+            $row->store?->name ?? '-',
+            $row->creator?->username ?? '-',
             (int) $row->perjanjian_livestream,
             (int) $row->perjanjian_video,
-            $row->product->sku ?? '-',
+            $row->product?->sku ?? '-',
             $qty,
             $harga,
             $total,
@@ -91,14 +89,20 @@ class SendSamplesExport extends DefaultValueBinder implements
     public function columnFormats(): array
     {
         return [
-            'L' => NumberFormat::FORMAT_TEXT,
+            'L' => NumberFormat::FORMAT_TEXT, // id_pesanan tetap sebagai teks
         ];
     }
 
+    /**
+     * Lebar kolom tetap (menggantikan ShouldAutoSize yang lambat pada data besar).
+     */
     public function columnWidths(): array
     {
         return [
-            'L' => 30,
+            'A' => 12, 'B' => 16, 'C' => 16, 'D' => 16, 'E' => 22,
+            'F' => 10, 'G' => 10, 'H' => 14, 'I' => 8,  'J' => 12,
+            'K' => 14, 'L' => 24, 'M' => 12, 'N' => 14, 'O' => 14,
+            'P' => 12, 'Q' => 10,
         ];
     }
 

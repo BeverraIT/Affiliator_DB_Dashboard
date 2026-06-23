@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 
 class Creator extends Model
 {
@@ -75,14 +76,18 @@ class Creator extends Model
 
     public function scopeRecent($query, $days = 7)
     {
-        return $query->whereDate('created_at', '>=', now()->subDays($days));
+        // created_at bertipe datetime: pakai start-of-day agar index terpakai
+        // tanpa membungkus kolom dalam fungsi DATE().
+        return $query->where('created_at', '>=', now()->subDays($days)->startOfDay());
     }
 
     public function scopeFilterDate($query, $start, $end, $column = 'created_at')
     {
         if ($start && $end) {
-            return $query->whereDate($column, '>=', $start)
-                         ->whereDate($column, '<=', $end);
+            // Half-open range [start 00:00, end+1 00:00) — menjaga semantik
+            // "sampai akhir hari end" untuk kolom datetime sekaligus index-friendly.
+            return $query->where($column, '>=', Carbon::parse($start)->startOfDay())
+                         ->where($column, '<', Carbon::parse($end)->addDay()->startOfDay());
         }
 
         return $query;

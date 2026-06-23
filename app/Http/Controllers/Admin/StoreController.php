@@ -3,28 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HandlesBulkDelete;
+use App\Http\Controllers\Concerns\ResolvesListQuery;
 use App\Http\Requests\UpdateStoreRequest;
-
 use App\Models\Store;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class StoreController extends Controller
 {
+    use HandlesBulkDelete;
+    use ResolvesListQuery;
+
     public function index(Request $request)
     {
         $q = (string) $request->query('q', '');
-        $sort = $request->query('sort', 'name');
-        $dir  = strtolower($request->query('dir', 'asc')) === 'desc' ? 'desc' : 'asc';
-
-        $allowedSorts = [
-            'id',
-            'name'
-        ];
-        if (!in_array($sort, $allowedSorts, true)) {
-            $sort = 'name';
-        }
+        [$sort, $dir] = $this->resolveSort($request, ['id', 'name'], 'name');
 
         $stores = Store::query()
             ->search($q)
@@ -32,20 +26,13 @@ class StoreController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.toko.index', compact(
-            'stores',
-            'q',
-            'sort',
-            'dir'
-        ));
+        return view('admin.toko.index', compact('stores', 'q', 'sort', 'dir'));
     }
-
 
     public function create()
     {
         return view('admin.toko.create');
     }
-
 
     public function store(Request $request)
     {
@@ -56,10 +43,7 @@ class StoreController extends Controller
             'name.unique'   => 'Nama toko sudah terdaftar.',
         ]);
 
-        Store::create([
-            'name' => trim($data['name']),
-        ]);
-
+        Store::create(['name' => trim($data['name'])]);
         Cache::forget('dropdown_stores');
 
         return redirect()
@@ -67,22 +51,20 @@ class StoreController extends Controller
             ->with('success', 'Toko berhasil ditambahkan.');
     }
 
-
     public function edit(Store $store)
     {
         return view('admin.toko.edit', compact('store'));
     }
 
-
     public function update(UpdateStoreRequest $request, Store $store)
     {
         $store->update($request->validated());
         Cache::forget('dropdown_stores');
+
         return redirect()
             ->route('admin.toko.index')
             ->with('success', 'Toko berhasil diperbarui.');
     }
-
 
     public function destroy(Store $store)
     {
@@ -94,7 +76,6 @@ class StoreController extends Controller
             ->with('success', 'Toko "' . $name . '" berhasil dihapus.');
     }
 
-    
     public function bulkDestroy(Request $request)
     {
         $request->validate([
@@ -102,15 +83,6 @@ class StoreController extends Controller
             'ids.*' => 'exists:stores,id',
         ]);
 
-        try {
-            $ids = $request->input('ids');
-            Store::whereIn('id', $ids)->delete();
-
-            return redirect()->back()
-                ->with('success', count($ids) . ' toko berhasil dihapus.');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal menghapus data: ' . $e->getMessage());
-        }
+        return $this->bulkDelete(Store::class, $request->input('ids'), 'toko');
     }
 }
