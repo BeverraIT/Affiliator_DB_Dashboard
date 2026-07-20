@@ -10,6 +10,7 @@
 
     /* ── Type Scale ──────────────────────────────────────────── */
     .ts-headline-sm { font-size: 1.5rem; font-weight: 600; line-height: 2rem; }
+    .ts-body-sm     { font-size: .75rem; font-weight: 400; line-height: 1rem; letter-spacing: .025em; }
 
     /* ── Surface Card ────────────────────────────────────────── */
     .surf-card { background: #fff; border-radius: var(--shape-lg); box-shadow: var(--md-elev-1); border: none; }
@@ -59,6 +60,32 @@
         content: ''; display: inline-block; width: 8px; height: 8px;
         border-radius: 50%; background: var(--md-primary); flex-shrink: 0;
     }
+
+    /* ── Toko: chip radio (selalu tampil, pilih satu) ────────── */
+    .ks-chip-group { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .ks-chip { position: relative; }
+    .ks-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .ks-chip label {
+        display: inline-flex; align-items: center; gap: .375rem;
+        padding: .4375rem .875rem; border-radius: 20px; cursor: pointer;
+        font-size: .8125rem; font-weight: 500; line-height: 1.2;
+        color: var(--md-on-surface-var);
+        background: var(--md-surface-var);
+        border: 1.5px solid var(--md-outline-var);
+        transition: all .12s;
+    }
+    .ks-chip label:hover { background: rgba(26,27,31,.06); }
+    .ks-chip input:checked + label {
+        background: var(--md-secondary-cont); color: var(--md-secondary);
+        border-color: var(--md-secondary);
+    }
+    .ks-chip input:focus-visible + label { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+    .ks-chip .ks-chip-check { display: none; }
+    .ks-chip input:checked + label .ks-chip-check { display: inline-flex; }
+
+    /* ── Inline field error ──────────────────────────────────── */
+    .invalid-feedback.d-block { color: var(--md-error); margin-top: .25rem; }
+    .is-invalid + .select2-container .select2-selection { border-color: var(--md-error) !important; }
     </style>
 @endpush
 
@@ -115,7 +142,7 @@
                                     <label class="ks-field-label" for="creator_id">
                                         Kreator <span style="color:var(--md-error);">*</span>
                                     </label>
-                                    <select name="creator_id" id="creator_id" class="form-select select2-ajax" required
+                                    <select name="creator_id" id="creator_id" class="form-select select2-ajax @error('creator_id') is-invalid @enderror" required
                                         data-url="{{ route('admin.kirim-sampel.search_creators') }}"
                                         data-placeholder="Cari kreator...">
                                         <option value=""></option>
@@ -123,6 +150,7 @@
                                             <option value="{{ $selectedCreator->id }}" selected>{{ $selectedCreator->username }}</option>
                                         @endif
                                     </select>
+                                    @error('creator_id')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- APPROVE --}}
@@ -130,13 +158,14 @@
                                     <label class="ks-field-label" for="approve">
                                         Approve <span style="color:var(--md-error);">*</span>
                                     </label>
-                                    <select name="approve" id="approve" class="form-select select2">
+                                    <select name="approve" id="approve" class="form-select select2 @error('approve') is-invalid @enderror">
                                         @foreach($users as $user)
                                             <option value="{{ $user->id }}" @selected(old('approve', $sendSample->approve) == $user->id)>
                                                 {{ $user->name }}
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('approve')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- PIC --}}
@@ -144,7 +173,7 @@
                                     <label class="ks-field-label" for="pic">
                                         PIC <span style="color:var(--md-error);">*</span>
                                     </label>
-                                    <select name="pic" id="pic" class="form-select select2" required>
+                                    <select name="pic" id="pic" class="form-select select2 @error('pic') is-invalid @enderror" required>
                                         <option value="{{ auth()->user()->id }}" selected>{{ auth()->user()->name }} (Anda)</option>
                                         @if(auth()->user()->role === 'super admin')
                                             @foreach($users as $user)
@@ -154,19 +183,32 @@
                                             @endforeach
                                         @endif
                                     </select>
+                                    @error('pic')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
-                                {{-- TOKO --}}
-                                <div class="col-12 col-md-6">
-                                    <label class="ks-field-label" for="store_id">
+                                {{-- TOKO (chip radio: langsung tampil, pilih satu) --}}
+                                <div class="col-12">
+                                    <label class="ks-field-label">
                                         Toko <span style="color:var(--md-error);">*</span>
                                     </label>
-                                    <select name="store_id" id="store_id" class="form-select select2" required>
-                                        <option value=""></option>
+                                    <div class="ks-chip-group" role="radiogroup" aria-label="Toko">
                                         @foreach($stores as $store)
-                                            <option value="{{ $store->id }}" @selected(old('store_id', $sendSample->store_id) == $store->id)>{{ $store->name }}</option>
+                                            <div class="ks-chip">
+                                                <input type="radio" name="store_id" id="store_{{ $store->id }}"
+                                                    value="{{ $store->id }}" required
+                                                    @checked(old('store_id', $sendSample->store_id) == $store->id)>
+                                                <label for="store_{{ $store->id }}">
+                                                    <span class="ks-chip-check">
+                                                        <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                            <path d="M4 10l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/>
+                                                        </svg>
+                                                    </span>
+                                                    {{ $store->name }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
+                                    @error('store_id')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- SKU --}}
@@ -174,7 +216,7 @@
                                     <label class="ks-field-label" for="product_id">
                                         SKU <span style="color:var(--md-error);">*</span>
                                     </label>
-                                    <select name="product_id" id="product_id" class="form-select select2-ajax" required
+                                    <select name="product_id" id="product_id" class="form-select select2-ajax @error('product_id') is-invalid @enderror" required
                                         data-url="{{ route('admin.kirim-sampel.search_products') }}"
                                         data-placeholder="Cari SKU...">
                                         <option value=""></option>
@@ -182,6 +224,7 @@
                                             <option value="{{ $selectedProduct->id }}" selected>{{ $selectedProduct->sku }}</option>
                                         @endif
                                     </select>
+                                    @error('product_id')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- SELLER PRODUCT ID --}}
@@ -199,7 +242,8 @@
                                     </label>
                                     <input type="number" min="1" name="qty" id="qty"
                                            value="{{ old('qty', $sendSample->qty) }}"
-                                           class="form-control" required>
+                                           class="form-control @error('qty') is-invalid @enderror" required>
+                                    @error('qty')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- PERJANJIAN LIVE --}}
@@ -251,15 +295,19 @@
                                     <label class="ks-field-label" for="deal_date">Tanggal Deal</label>
                                     <input type="date" name="deal_date" id="deal_date"
                                            value="{{ old('deal_date', optional($sendSample->deal_date)->format('Y-m-d')) }}"
-                                           class="form-control">
+                                           class="form-control @error('deal_date') is-invalid @enderror">
+                                    @error('deal_date')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- TANGGAL KIRIM --}}
                                 <div class="col-6">
-                                    <label class="ks-field-label" for="tanggal_kirim">Tanggal Kirim</label>
-                                    <input type="date" name="tanggal_kirim" id="tanggal_kirim"
+                                    <label class="ks-field-label" for="tanggal_kirim">
+                                        Tanggal Kirim <span style="color:var(--md-error);">*</span>
+                                    </label>
+                                    <input type="date" name="tanggal_kirim" id="tanggal_kirim" required
                                            value="{{ old('tanggal_kirim', optional($sendSample->tanggal_kirim)->format('Y-m-d')) }}"
-                                           class="form-control">
+                                           class="form-control @error('tanggal_kirim') is-invalid @enderror">
+                                    @error('tanggal_kirim')<div class="invalid-feedback d-block ts-body-sm">{{ $message }}</div>@enderror
                                 </div>
 
                                 {{-- ESTIMASI SAMPAI --}}
@@ -299,11 +347,11 @@
                                     Duplikat
                                 </button>
 
-                                <button type="submit" class="btn-md filled-primary">
+                                <button type="submit" id="btn-update" class="btn-md filled-primary">
                                     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M4 13l4 4L16 7" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
-                                    Update
+                                    <span class="btn-label">Update</span>
                                 </button>
                             </div>
                         </div>
@@ -344,6 +392,17 @@
                         cache: true
                     }
                 });
+            });
+
+            // Fokus otomatis ke kotak cari saat dropdown Select2 dibuka (cukup 1 klik)
+            $(document).on('select2:open', () => {
+                document.querySelector('.select2-container--open .select2-search__field')?.focus();
+            });
+
+            // Cegah double-submit (tetap kompatibel dgn tombol Duplikat)
+            $('#form-kirim-sampel').on('submit', function () {
+                $('#btn-update').prop('disabled', true).css('opacity', .7)
+                    .find('.btn-label').text('Menyimpan...');
             });
 
             $('#tanggal_kirim').on('change', function() {
