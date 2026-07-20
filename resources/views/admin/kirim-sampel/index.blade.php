@@ -220,12 +220,12 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
-    @if (session('delete_error'))
+    @if (session('error') || session('delete_error'))
         <div class="md-banner md-banner-error">
             <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.1rem;">
                 <circle cx="10" cy="10" r="8"/><path d="M10 7v4M10 13.5v.5" stroke-linecap="round"/>
             </svg>
-            <span>{{ session('delete_error') }}</span>
+            <span>{{ session('error') ?? session('delete_error') }}</span>
         </div>
     @endif
 
@@ -377,7 +377,7 @@
                         $hasIdPesanan    = !empty($row->id_pesanan);
                         $idPesananVal    = (string) ($row->id_pesanan ?? '');
 
-                        $usernameVal     = $row->creator->username ?? $row->creator->name ?? '-';
+                        $usernameVal     = $row->creator->username ?? '-';
                     @endphp
 
                     <tr>

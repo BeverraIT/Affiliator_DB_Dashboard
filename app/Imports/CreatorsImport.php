@@ -2,36 +2,42 @@
 
 namespace App\Imports;
 
-use App\Models\Creator;
-use App\Models\Category;
 use App\Models\Age;
+use App\Models\Category;
 use App\Models\ContentStyle;
+use App\Models\Creator;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Row;
 
-class CreatorsImport implements OnEachRow, WithHeadingRow, WithValidation, WithChunkReading
+class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, WithHeadingRow, WithValidation
 {
     /** Peta name=>id di-cache agar tidak firstOrCreate berulang tiap baris. */
     protected Collection $categoryMap;
+
     protected Collection $ageMap;
+
     protected Collection $styleMap;
 
     /** Set username yang sudah ada (cek duplikat in-memory, bukan query/baris). */
     protected Collection $existing;
 
     public int $imported = 0;
+
     public int $skipped = 0;
 
     public function __construct()
     {
         $this->categoryMap = Category::pluck('id', 'name');
-        $this->ageMap      = Age::pluck('id', 'name');
-        $this->styleMap    = ContentStyle::pluck('id', 'name');
-        $this->existing    = Creator::pluck('username')->flip();
+        $this->ageMap = Age::pluck('id', 'name');
+        $this->styleMap = ContentStyle::pluck('id', 'name');
+        $this->existing = Creator::pluck('username')
+            ->map(fn ($u) => Creator::normalizeUsername((string) $u))
+            ->flip();
     }
 
     public function onRow(Row $row)
@@ -43,24 +49,38 @@ class CreatorsImport implements OnEachRow, WithHeadingRow, WithValidation, WithC
             }
         }
 
+        // Normalisasi sama dengan form (strip @, lowercase) agar dedupe konsisten.
+        $username = Creator::normalizeUsername((string) $row['username']);
+        $channel = strtolower((string) $row['channel']);
+        $gender = strtolower((string) $row['genderpengikut']);
+
         // Lewati duplikat tanpa query per baris.
-        if ($this->existing->has($row['username'])) {
+        if ($username === '' || $this->existing->has($username)) {
             $this->skipped++;
+
+            return;
+        }
+
+        // Nilai enum di luar daftar yang diterima form dilewati, bukan menggagalkan file.
+        if (! in_array($channel, ['video', 'live', 'kartu produk'], true)
+            || ! in_array($gender, ['perempuan', 'laki-laki', 'seimbang'], true)) {
+            $this->skipped++;
+
             return;
         }
 
         $creator = Creator::create([
-            'username'       => $row['username'],
-            'channel'        => $row['channel'],
-            'gmv'            => $row['gmv'],
-            'itemsterjual'   => $row['itemsterjual'],
-            'genderpengikut' => $row['genderpengikut'],
-            'namawa'         => $row['namawa'] ?? null,
-            'nomerwa'        => $row['nomerwa'] ?? null,
-            'user_id'        => auth()->id(),
+            'username' => $username,
+            'channel' => $channel,
+            'gmv' => $row['gmv'],
+            'itemsterjual' => $row['itemsterjual'],
+            'genderpengikut' => $gender,
+            'namawa' => $row['namawa'] ?? null,
+            'nomerwa' => $row['nomerwa'] ?? null,
+            'user_id' => auth()->id(),
         ]);
 
-        $this->existing->put($row['username'], true);
+        $this->existing->put($username, true);
         $this->imported++;
 
         $this->syncRelation($creator, $row['kategori'] ?? null, 'categories', $this->categoryMap, Category::class);
@@ -100,10 +120,10 @@ class CreatorsImport implements OnEachRow, WithHeadingRow, WithValidation, WithC
         return [
             // username harus berupa handle (tanpa spasi/koma) — mencegah string
             // kategori nyasar ke kolom username akibat kolom CSV tidak sejajar.
-            'username'       => ['required', 'regex:/^[^\s,]+$/'],
-            'channel'        => ['required'],
-            'gmv'            => ['required'],
-            'itemsterjual'   => ['required'],
+            'username' => ['required', 'regex:/^[^\s,]+$/'],
+            'channel' => ['required'],
+            'gmv' => ['required', 'numeric', 'min:0'],
+            'itemsterjual' => ['required', 'numeric', 'min:0'],
             'genderpengikut' => ['required'],
         ];
     }

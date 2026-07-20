@@ -20,9 +20,11 @@ trait HandlesBulkDelete
         try {
             $modelClass::whereIn('id', $ids)->delete();
 
-            return back()->with('success', count($ids) . " {$label} berhasil dihapus.");
+            return back()->with('success', count($ids)." {$label} berhasil dihapus.");
         } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Gagal bulk delete', ['model' => $modelClass, 'exception' => $e]);
+
+            return back()->with('error', 'Gagal menghapus data.');
         }
     }
 }

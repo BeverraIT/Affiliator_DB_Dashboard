@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\Store;
-use App\Models\Creator;
-use App\Models\Product;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class SendSample extends Model
 {
     protected $table = 'send_sample';
+
     public $timestamps = false;
+
     protected $fillable = [
         'creator_id',
         'store_id',
@@ -33,13 +31,14 @@ class SendSample extends Model
         'video_dibuat',
         'status_follow_up_konten_mingguan',
         'status_chat',
-        'tanggal_dichat'
+        'tanggal_dichat',
     ];
+
     protected $casts = [
-        'deal_date'        => 'date',
-        'tanggal_kirim'    => 'date',
-        'estimasi_sampai'  => 'date',
-        'tanggal_aktual'   => 'date',
+        'deal_date' => 'date',
+        'tanggal_kirim' => 'date',
+        'estimasi_sampai' => 'date',
+        'tanggal_aktual' => 'date',
         'status_chat' => 'integer',
         'tanggal_dichat' => 'datetime',
     ];
@@ -47,12 +46,12 @@ class SendSample extends Model
     public function scopeDateRange(Builder $query, $startDate, $endDate)
     {
         return $query->where('deal_date', '>=', $startDate)
-                     ->where('deal_date', '<=', $endDate);
+            ->where('deal_date', '<=', $endDate);
     }
 
     public function scopeByPic(Builder $query, $userId)
     {
-        return $query->when($userId, fn($q) => $q->where('pic', $userId));
+        return $query->when($userId, fn ($q) => $q->where('pic', $userId));
     }
 
     public function scopePendingContent(Builder $query)
@@ -60,7 +59,7 @@ class SendSample extends Model
         return $query->whereNotNull('tanggal_dichat')
             ->where('status_follow_up_konten_mingguan', 0)
             ->where('tanggal_dichat', '<=', now()->subDays(3)->toDateString())
-            ->where(fn($q) => $q
+            ->where(fn ($q) => $q
                 ->whereColumn('video_dibuat', '<', 'perjanjian_video')
             );
     }
@@ -75,7 +74,7 @@ class SendSample extends Model
     public function scopeBySkuUtama(Builder $query, $sku_utama)
     {
         return $query->when($sku_utama, function ($q) use ($sku_utama) {
-            $q->whereHas('product', fn($p) => $p->where('sku_utama', $sku_utama));
+            $q->whereHas('product', fn ($p) => $p->where('sku_utama', $sku_utama));
         });
     }
 
@@ -83,14 +82,14 @@ class SendSample extends Model
     {
         return $query->when($search, function ($q) use ($search) {
             $like = "%{$search}%";
-            $q->where(fn($sub) => $sub
+            $q->where(fn ($sub) => $sub
                 ->where('id_pesanan', 'like', $like)
-                ->orWhereHas('creator', fn($c) => $c
+                ->orWhereHas('creator', fn ($c) => $c
                     ->where('username', 'like', $like)
                     ->orWhere('namawa', 'like', $like))
-                ->orWhereHas('store', fn($s) => $s->where('name', 'like', $like))
-                ->orWhereHas('product', fn($p) => $p->where('sku', 'like', $like))
-                ->orWhereHas('user', fn($u) => $u->where('name', 'like', $like))
+                ->orWhereHas('store', fn ($s) => $s->where('name', 'like', $like))
+                ->orWhereHas('product', fn ($p) => $p->where('sku', 'like', $like))
+                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $like))
             );
         });
     }
@@ -98,14 +97,7 @@ class SendSample extends Model
     public static function calculateTotalExpense()
     {
         return self::join('products', 'send_sample.product_id', '=', 'products.id')
-                    ->sum(DB::raw('send_sample.qty * products.harga'));
-    }
-
-    public function scopeNeedShipmentFollowUp(Builder $query)
-    {
-        return $query->whereNull('tanggal_aktual')
-            ->whereNotNull('estimasi_sampai')
-            ->where('estimasi_sampai', '<=', Carbon::today()->addDays(3)->toDateString());
+            ->sum(DB::raw('send_sample.qty * products.harga'));
     }
 
     public function scopeUnfulfilledAgreement(Builder $query)
@@ -138,11 +130,12 @@ class SendSample extends Model
     {
         if ($start && $end) {
             return $query->where($column, '>=', $start)
-                         ->where($column, '<=', $end);
+                ->where($column, '<=', $end);
         }
+
         return $query;
     }
-    
+
     public function getTotalNilaiAttribute()
     {
         if ($this->product) {

@@ -2,46 +2,53 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use App\Exports\CreatorsExport;
+use App\Exports\TemplateExport;
 use App\Http\Controllers\Concerns\HandlesBulkDelete;
+use App\Http\Controllers\Concerns\RedirectsSafely;
 use App\Http\Controllers\Concerns\ResolvesListQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCreatorRequest;
 use App\Http\Requests\UpdateCreatorRequest;
-
+use App\Imports\CreatorsImport;
+use App\Models\Age;
 use App\Models\Category;
 use App\Models\ContentStyle;
 use App\Models\Creator;
-use App\Models\Age;
 use App\Models\User;
-
-use App\Imports\CreatorsImport;
-use App\Exports\CreatorsExport;
-use App\Exports\TemplateExport;
-
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class CreatorController extends Controller
 {
     use HandlesBulkDelete;
+    use RedirectsSafely;
     use ResolvesListQuery;
+
+    /** Aksi destruktif hanya untuk super admin — cek yang sama dengan gate di Blade. */
+    private function authorizeSuperAdmin(): void
+    {
+        $user = Auth::user();
+        if (! $user || $user->role !== 'super admin') {
+            abort(403);
+        }
+    }
 
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
 
-        $filterUmur     = $request->query('filter_umur', []);
+        $filterUmur = $request->query('filter_umur', []);
         $filterKategori = $request->query('filter_kategori', []);
-        $filterStyle    = $request->query('filter_style', []);
-        $filterNoWa     = $request->query('filter_no_wa');
-        $filterUser     = $request->query('filter_user', []);
-        $minGmv         = $request->query('min_gmv');
-        $maxGmv         = $request->query('max_gmv');
+        $filterStyle = $request->query('filter_style', []);
+        $filterNoWa = $request->query('filter_no_wa');
+        $filterUser = $request->query('filter_user', []);
+        $minGmv = $request->query('min_gmv');
+        $maxGmv = $request->query('max_gmv');
 
         [$sort, $dir] = $this->resolveSort(
             $request,
@@ -91,10 +98,10 @@ class CreatorController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $ageOptions      = Age::orderBy('name')->get();
+        $ageOptions = Age::orderBy('name')->get();
         $categoryOptions = Category::orderBy('name')->get();
-        $styleOptions    = ContentStyle::orderBy('name')->get();
-        $userOptions     = User::orderBy('name')->get();
+        $styleOptions = ContentStyle::orderBy('name')->get();
+        $userOptions = User::orderBy('name')->get();
 
         return view('admin.kreator.index', compact(
             'creators', 'q', 'sort', 'dir',
@@ -104,12 +111,11 @@ class CreatorController extends Controller
         ));
     }
 
-
     public function create()
     {
-        $categories     = Category::orderBy('name')->get();
-        $contentStyles  = ContentStyle::orderBy('name')->get();
-        $ages           = Age::orderBy('id')->get();
+        $categories = Category::orderBy('name')->get();
+        $contentStyles = ContentStyle::orderBy('name')->get();
+        $ages = Age::orderBy('id')->get();
 
         return view('admin.kreator.create', compact(
             'categories',
@@ -117,7 +123,6 @@ class CreatorController extends Controller
             'ages'
         ));
     }
-
 
     public function store(StoreCreatorRequest $request)
     {
@@ -137,7 +142,6 @@ class CreatorController extends Controller
             ->with('success', 'Kreator berhasil ditambahkan.');
     }
 
-
     public function show(Creator $creator)
     {
         $creator->load([
@@ -151,7 +155,6 @@ class CreatorController extends Controller
         return view('admin.kreator.show', compact('creator'));
     }
 
-
     public function edit(Creator $creator)
     {
         $creator->load([
@@ -160,13 +163,13 @@ class CreatorController extends Controller
             'contentStyles:id,name',
         ]);
 
-        $categories     = Category::orderBy('name')->pluck('name', 'id');
-        $contentStyles  = ContentStyle::orderBy('name')->pluck('name', 'id');
-        $ages           = Age::orderBy('name')->pluck('name', 'id');
+        $categories = Category::orderBy('name')->pluck('name', 'id');
+        $contentStyles = ContentStyle::orderBy('name')->pluck('name', 'id');
+        $ages = Age::orderBy('name')->pluck('name', 'id');
 
-        $selectedAgeIds         = $creator->ages->modelKeys();
-        $selectedCategoryIds    = $creator->categories->modelKeys();
-        $selectedStyleIds       = $creator->contentStyles->modelKeys();
+        $selectedAgeIds = $creator->ages->modelKeys();
+        $selectedCategoryIds = $creator->categories->modelKeys();
+        $selectedStyleIds = $creator->contentStyles->modelKeys();
 
         return view('admin.kreator.edit', compact(
             'creator',
@@ -190,42 +193,58 @@ class CreatorController extends Controller
             $creator->contentStyles()->sync($validated->collect('contentstyles'));
         });
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->redirect_to)
-                ->with('success', 'Kreator berhasil diperbarui.');
-        }
-
-        return redirect()
-            ->route('admin.kreator.index')
+        return $this->redirectSafely($request, 'admin.kreator.index')
             ->with('success', 'Kreator berhasil diperbarui.');
     }
 
-
     public function destroy(Creator $creator)
     {
-        $creator->delete();
+        $this->authorizeSuperAdmin();
+
+        DB::transaction(function () use ($creator) {
+            $creator->ages()->detach();
+            $creator->categories()->detach();
+            $creator->contentStyles()->detach();
+            $creator->delete();
+        });
 
         return redirect()
             ->route('admin.kreator.index')
             ->with('success', 'Kreator berhasil dihapus.');
     }
 
-
-    public function bulkDestroy(Request $request) 
+    public function bulkDestroy(Request $request)
     {
+        $this->authorizeSuperAdmin();
+
         $request->validate([
-            'ids'   => 'required|array',
+            'ids' => 'required|array',
             'ids.*' => 'exists:creators,id',
         ]);
 
-        return $this->bulkDelete(Creator::class, $request->input('ids'), 'kreator');
-    }
+        $ids = $request->input('ids');
 
+        try {
+            // Lepas pivot dulu agar tidak meninggalkan baris orphan di tabel relasi.
+            DB::transaction(function () use ($ids) {
+                DB::table('age_creator')->whereIn('creator_id', $ids)->delete();
+                DB::table('category_creator')->whereIn('creator_id', $ids)->delete();
+                DB::table('content_style_creator')->whereIn('creator_id', $ids)->delete();
+                Creator::whereIn('id', $ids)->delete();
+            });
+
+            return back()->with('success', count($ids).' kreator berhasil dihapus.');
+        } catch (\Throwable $e) {
+            Log::error('Gagal bulk delete kreator', ['exception' => $e]);
+
+            return back()->with('error', 'Gagal menghapus data.');
+        }
+    }
 
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240'
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
         ]);
 
         try {
@@ -242,12 +261,14 @@ class CreatorController extends Controller
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $count = count($e->failures());
             $first = $e->failures()[0] ?? null;
-            $detail = $first ? " Contoh baris {$first->row()}: " . implode(', ', $first->errors()) : '';
+            $detail = $first ? " Contoh baris {$first->row()}: ".implode(', ', $first->errors()) : '';
 
-            return back()->with('error', "Gagal upload: {$count} baris tidak valid." . $detail);
+            return back()->with('error', "Gagal upload: {$count} baris tidak valid.".$detail);
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            Log::error('Gagal import kreator', ['exception' => $e]);
+
+            return back()->with('error', 'Terjadi kesalahan saat import. Periksa kembali format file dan datanya.');
         }
     }
 
@@ -260,13 +281,15 @@ class CreatorController extends Controller
 
     public function export(Request $request)
     {
-        return Excel::download(new CreatorsExport($request), 'Kreator_' . date('Ymd_His') . '.xlsx');
+        return Excel::download(new CreatorsExport($request), 'Kreator_'.date('Ymd_His').'.xlsx');
     }
 
     public function blokir(Creator $creator)
     {
+        $this->authorizeSuperAdmin();
+
         $creator->update([
-            'is_blocked' => 1
+            'is_blocked' => 1,
         ]);
 
         return redirect()->back()->with('success', 'Kreator berhasil diblokir.');
@@ -275,18 +298,21 @@ class CreatorController extends Controller
     public function checkUsername(Request $request)
     {
         try {
-            $exists = Creator::where('username', $request->input('username'))->exists();
-            
+            // Normalisasi sama dengan Store/UpdateCreatorRequest agar hasil cek AJAX
+            // konsisten dengan rule unique saat submit.
+            $username = Creator::normalizeUsername((string) $request->input('username'));
+            $exists = $username !== '' && Creator::where('username', $username)->exists();
+
             return response()->json([
                 'success' => true,
-                'exists'  => $exists
+                'exists' => $exists,
             ], 200);
 
         } catch (\Exception $e) {
 
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan pada server saat memvalidasi username. Silakan coba lagi.'
+                'message' => 'Terjadi kesalahan pada server saat memvalidasi username. Silakan coba lagi.',
             ], 500);
         }
     }
@@ -294,25 +320,25 @@ class CreatorController extends Controller
     public function autoFill(Request $request)
     {
         $username = $request->input('username');
-        if (!$username) {
+        if (! $username) {
             return response()->json([
-                'success' => false, 
-                'message' => 'Username tidak boleh kosong'
+                'success' => false,
+                'message' => 'Username tidak boleh kosong',
             ]);
         }
 
-        $url = "https://www.fastmoss.com/api/author/search";
+        $url = 'https://www.fastmoss.com/api/author/search';
         $currentTime = (string) now()->timestamp;
         $nonce = (string) random_int(10000000, 99999999);
         $params = [
-            "words" => $username,
-            "_time" => $currentTime,
-            "cnonce" => $nonce
+            'words' => $username,
+            '_time' => $currentTime,
+            'cnonce' => $nonce,
         ];
         $headers = [
-            "accept" => "application/json, text/plain, */*",
-            "source" => "pc",
-            "user-agent" => "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+            'accept' => 'application/json, text/plain, */*',
+            'source' => 'pc',
+            'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
         ];
 
         try {
@@ -337,36 +363,36 @@ class CreatorController extends Controller
 
                 $fansPortrait = $author['fansPortrait'] ?? [];
                 $genders = $fansPortrait['follower_genders'] ?? [];
-                
+
                 $malePct = 0.0;
                 $femalePct = 0.0;
-                
+
                 foreach ($genders as $g) {
                     if (($g['key'] ?? '') === 'male') {
-                        $malePct = (float)($g['value'] ?? 0);
+                        $malePct = (float) ($g['value'] ?? 0);
                     } elseif (($g['key'] ?? '') === 'female') {
-                        $femalePct = (float)($g['value'] ?? 0);
+                        $femalePct = (float) ($g['value'] ?? 0);
                     }
                 }
 
                 if (abs($malePct - $femalePct) <= 1) {
-                    $genderStatus = "seimbang";
+                    $genderStatus = 'seimbang';
                 } elseif ($malePct > $femalePct) {
-                    $genderStatus = "laki-laki";
+                    $genderStatus = 'laki-laki';
                 } else {
-                    $genderStatus = "perempuan";
+                    $genderStatus = 'perempuan';
                 }
 
                 $ages = $fansPortrait['follower_ages'] ?? [];
-                usort($ages, fn ($a, $b) => ((float)($b['value'] ?? 0)) <=> ((float)($a['value'] ?? 0)));
+                usort($ages, fn ($a, $b) => ((float) ($b['value'] ?? 0)) <=> ((float) ($a['value'] ?? 0)));
                 $top2Ages = array_values(array_filter(array_column(array_slice($ages, 0, 2), 'key')));
 
                 $kategori = $author['sale_category_l1_name'] ?? [];
-                $gmvShow  = $author['sale_28d_amount_show'] ?? '0';
+                $gmvShow = $author['sale_28d_amount_show'] ?? '0';
 
                 $gmv = 0;
                 if ($gmvShow) {
-                    $str        = str_replace([' ', 'rp'], '', strtolower($gmvShow));
+                    $str = str_replace([' ', 'rp'], '', strtolower($gmvShow));
                     $multiplier = 1;
 
                     if (str_contains($str, 'jt')) {
@@ -390,12 +416,12 @@ class CreatorController extends Controller
                 $itemTerjual = $author['sale_28d_count'] ?? 0;
 
                 return response()->json([
-                    'success'      => true,
-                    'channel'      => $topChannel,
-                    'gender'       => $genderStatus,
-                    'umur'         => $top2Ages,
-                    'kategori'     => $kategori,
-                    'gmv'          => $gmv,
+                    'success' => true,
+                    'channel' => $topChannel,
+                    'gender' => $genderStatus,
+                    'umur' => $top2Ages,
+                    'kategori' => $kategori,
+                    'gmv' => $gmv,
                     'item_terjual' => $itemTerjual,
                 ]);
             }

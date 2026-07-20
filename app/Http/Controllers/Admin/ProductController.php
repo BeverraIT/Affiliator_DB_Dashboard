@@ -1,26 +1,31 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-use App\Http\Controllers\Controller;
-use App\Http\Controllers\Concerns\HandlesBulkDelete;
-use App\Http\Controllers\Concerns\ResolvesListQuery;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
 
-use App\Models\Product;
-
-use App\Imports\ProductsImport;
 use App\Exports\ProductsExport;
 use App\Exports\TemplateExport;
-
+use App\Http\Controllers\Concerns\HandlesBulkDelete;
+use App\Http\Controllers\Concerns\ResolvesListQuery;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Imports\ProductsImport;
+use App\Models\Product;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
     use HandlesBulkDelete;
     use ResolvesListQuery;
+
+    /** Dropdown SKU utama di halaman kirim sampel di-cache; invalidasi tiap data produk berubah. */
+    private function clearSkuDropdownCache(): void
+    {
+        Cache::forget('dropdown_skus');
+    }
 
     public function index(Request $request)
     {
@@ -41,12 +46,10 @@ class ProductController extends Controller
         ));
     }
 
-
     public function create()
     {
         return view('admin.product.create');
     }
-
 
     public function store(StoreProductRequest $request)
     {
@@ -54,21 +57,20 @@ class ProductController extends Controller
 
         Product::create([
             'sku_utama' => $data['sku_utama'],
-            'sku'       => $data['sku'],
-            'harga'     => $data['harga'],
+            'sku' => $data['sku'],
+            'harga' => $data['harga'],
         ]);
+        $this->clearSkuDropdownCache();
 
         return redirect()
             ->route('admin.product.index')
             ->with('success', 'Produk berhasil ditambahkan.');
     }
 
-
     public function edit(Product $product)
     {
         return view('admin.product.edit', compact('product'));
     }
-
 
     public function update(UpdateProductRequest $request, Product $product)
     {
@@ -76,36 +78,38 @@ class ProductController extends Controller
 
         $product->update([
             'sku_utama' => $data['sku_utama'],
-            'sku'       => $data['sku'],
-            'harga'     => $data['harga'],
+            'sku' => $data['sku'],
+            'harga' => $data['harga'],
         ]);
+        $this->clearSkuDropdownCache();
 
         return redirect()
             ->route('admin.product.index')
             ->with('success', 'Produk berhasil diperbarui.');
     }
 
-
     public function destroy(Product $product)
     {
         $product->delete();
+        $this->clearSkuDropdownCache();
 
         return redirect()
             ->route('admin.product.index')
             ->with('success', 'Produk berhasil dihapus.');
     }
 
-
     public function bulkDestroy(Request $request)
     {
         $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'exists:products,id'
+            'ids' => 'required|array',
+            'ids.*' => 'exists:products,id',
         ]);
 
-        return $this->bulkDelete(Product::class, $request->input('ids'), 'produk');
-    }
+        $response = $this->bulkDelete(Product::class, $request->input('ids'), 'produk');
+        $this->clearSkuDropdownCache();
 
+        return $response;
+    }
 
     public function import(Request $request)
     {
@@ -114,18 +118,33 @@ class ProductController extends Controller
         ]);
 
         try {
-            Excel::import(new ProductsImport, $request->file('file'));
-            return back()->with('success', 'Berhasil upload produk massal!');
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            $count = count($e->failures());
-            $first = $e->failures()[0] ?? null;
-            $detail = $first ? " Contoh baris {$first->row()}: " . implode(', ', $first->errors()) : '';
-            return back()->with('error', "Gagal upload: {$count} baris tidak valid (cek SKU duplikat/format)." . $detail);
+            $import = new ProductsImport;
+            Excel::import($import, $request->file('file'));
+            $this->clearSkuDropdownCache();
+
+            $detail = [];
+            if ($import->skippedDuplicate > 0) {
+                $detail[] = "{$import->skippedDuplicate} baris dilewati karena SKU sudah ada.";
+            }
+            if ($import->skippedInvalid > 0) {
+                $detail[] = "{$import->skippedInvalid} baris dilewati karena data tidak valid (SKU kosong / harga bukan angka).";
+            }
+            $detail = implode(' ', $detail);
+
+            if ($import->imported === 0 && $detail !== '') {
+                return back()->with('error', trim('Tidak ada produk baru yang diimport. '.$detail));
+            }
+
+            return back()->with('success', trim("Berhasil import {$import->imported} produk. ".$detail));
+        } catch (\InvalidArgumentException $e) {
+            // Pesan ramah dari guard header template.
+            return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            Log::error('Gagal import produk', ['exception' => $e]);
+
+            return back()->with('error', 'Terjadi kesalahan saat import. Periksa kembali format file dan datanya.');
         }
     }
-
 
     public function downloadTemplate()
     {
@@ -136,6 +155,6 @@ class ProductController extends Controller
 
     public function export()
     {
-        return Excel::download(new ProductsExport, 'Produk_' . date('Ymd_His') . '.xlsx');
+        return Excel::download(new ProductsExport, 'Produk_'.date('Ymd_His').'.xlsx');
     }
 }

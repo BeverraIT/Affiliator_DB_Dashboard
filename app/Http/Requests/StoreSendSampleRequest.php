@@ -14,20 +14,20 @@ class StoreSendSampleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'creator_id'            => ['required'],
-            'pic'                   => ['required'],
-            'approve'               => ['required'],
-            'store_id'              => ['required', 'exists:stores,id'],
-            'product_id'            => ['required', 'exists:products,id'],
-            'seller_product_id'     => ['nullable', 'string'],
-            'deal_date'             => ['required', 'date'],
-            'tanggal_kirim'         => ['required', 'date', 'after_or_equal:deal_date'],
-            'estimasi_sampai'       => ['nullable', 'date', 'after_or_equal:tanggal_kirim'],
-            'tanggal_aktual'        => ['nullable', 'date'],
-            'qty'                   => ['required', 'integer', 'min:1'],
-            'id_pesanan'            => ['nullable', 'string', 'max:255'],
+            'creator_id' => ['required', 'exists:creators,id'],
+            'pic' => ['required', 'exists:users,id'],
+            'approve' => ['required', 'exists:users,id'],
+            'store_id' => ['required', 'exists:stores,id'],
+            'product_id' => ['required', 'exists:products,id'],
+            'seller_product_id' => ['nullable', 'string'],
+            'deal_date' => ['required', 'date'],
+            'tanggal_kirim' => ['required', 'date', 'after_or_equal:deal_date'],
+            'estimasi_sampai' => ['nullable', 'date', 'after_or_equal:tanggal_kirim'],
+            'tanggal_aktual' => ['nullable', 'date'],
+            'qty' => ['required', 'integer', 'min:1'],
+            'id_pesanan' => ['nullable', 'string', 'max:255'],
             'perjanjian_livestream' => ['nullable', 'integer', 'min:0'],
-            'perjanjian_video'      => ['nullable', 'integer', 'min:0'],
+            'perjanjian_video' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
@@ -35,7 +35,7 @@ class StoreSendSampleRequest extends FormRequest
     {
         return [
             'creator_id' => 'kreator',
-            'store_id'   => 'toko',
+            'store_id' => 'toko',
             'product_id' => 'produk',
         ];
     }

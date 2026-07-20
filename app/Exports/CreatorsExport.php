@@ -3,14 +3,14 @@
 namespace App\Exports;
 
 use App\Models\Creator;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Http\Request;
 
-class CreatorsExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithChunkReading
+class CreatorsExport implements FromQuery, WithChunkReading, WithColumnWidths, WithHeadings, WithMapping
 {
     protected $request;
 
@@ -25,9 +25,17 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, WithColumn
         $filter_umur = $this->request->query('filter_umur', []);
         $filter_kategori = $this->request->query('filter_kategori', []);
         $filter_style = $this->request->query('filter_style', []);
+        $filter_user = $this->request->query('filter_user', []);
+        $filter_no_wa = $this->request->query('filter_no_wa');
         $min_gmv = $this->request->query('min_gmv');
         $max_gmv = $this->request->query('max_gmv');
+
+        // Whitelist kolom sort — sama dengan resolveSort di CreatorController::index.
+        $allowedSort = ['id', 'username', 'gmv', 'itemsterjual', 'channel', 'genderpengikut'];
         $sort = (string) $this->request->query('sort', 'username');
+        if (! in_array($sort, $allowedSort, true)) {
+            $sort = 'username';
+        }
         $dir = strtolower((string) $this->request->query('dir', 'desc')) == 'asc' ? 'asc' : 'desc';
 
         $query = Creator::query()
@@ -38,21 +46,21 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, WithColumn
             ]);
 
         // Filter Umur
-        if (!empty($filter_umur)) {
+        if (! empty($filter_umur)) {
             $query->whereHas('ages', function ($q) use ($filter_umur) {
                 $q->whereIn('ages.id', $filter_umur);
             });
         }
 
         // Filter Kategori
-        if (!empty($filter_kategori)) {
+        if (! empty($filter_kategori)) {
             $query->whereHas('categories', function ($q) use ($filter_kategori) {
                 $q->whereIn('categories.id', $filter_kategori);
             });
         }
 
         // Filter Content Style
-        if (!empty($filter_style)) {
+        if (! empty($filter_style)) {
             $query->whereHas('contentStyles', function ($q) use ($filter_style) {
                 $q->whereIn('contentstyles.id', $filter_style);
             });
@@ -80,11 +88,14 @@ class CreatorsExport implements FromQuery, WithHeadings, WithMapping, WithColumn
             $query->where('is_blocked', 1);
         }
 
-        if ($q) {
-            $query->where('username', 'like', '%' . $q . '%');
+        // Filter PIC & tanpa nomor WA — disamakan dengan index.
+        if (! empty($filter_user)) {
+            $query->whereIn('user_id', $filter_user);
         }
+        $query->when($filter_no_wa, fn ($sq) => $sq->whereNull('nomerwa'));
 
-        return $query->orderBy($sort, $dir);
+        // Scope search model (escape wildcard, cakup username/namawa/nomerwa) — sama dengan index.
+        return $query->search($q)->orderBy($sort, $dir);
     }
 
     public function headings(): array

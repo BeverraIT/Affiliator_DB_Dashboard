@@ -16,7 +16,7 @@ class UpdateCreatorRequest extends FormRequest
     {
         if ($this->has('username')) {
             $this->merge([
-                'username' => strtolower(ltrim(trim((string) $this->username), '@')),
+                'username' => \App\Models\Creator::normalizeUsername((string) $this->username),
             ]);
         }
 
@@ -31,21 +31,21 @@ class UpdateCreatorRequest extends FormRequest
         $creator = $this->route('creator') ?? $this->route('kreator');
 
         return [
-            'username'          => ['required', 'string', 'max:150', 'regex:/^[a-z0-9._]+$/', Rule::unique('creators', 'username')->ignore($creator->id)],
-            'top_creator'       => ['boolean'],
-            'is_blocked'        => ['boolean'],
-            'channel'           => ['required', Rule::in(['video', 'live', 'kartu produk'])],
-            'genderpengikut'    => ['required', Rule::in(['laki-laki', 'perempuan', 'seimbang'])],
-            'gmv'               => ['required', 'integer', 'min:0'],
-            'itemsterjual'      => ['required', 'integer', 'min:0'],
-            'namawa'            => ['nullable', 'string', 'max:150'],
-            'nomerwa'           => ['nullable', 'string', 'max:150'],
-            'ages'              => ['nullable', 'array'],
-            'ages.*'            => ['integer', Rule::exists('ages', 'id')],
-            'categories'        => ['nullable', 'array', 'max:5'],
-            'categories.*'      => ['integer', Rule::exists('categories', 'id')],
-            'contentstyles'     => ['nullable', 'array', 'max:9'],
-            'contentstyles.*'   => ['integer', Rule::exists('contentstyles', 'id')],
+            'username' => ['required', 'string', 'max:150', 'regex:/^[a-z0-9._]+$/', Rule::unique('creators', 'username')->ignore($creator->id)],
+            'top_creator' => ['boolean'],
+            'is_blocked' => ['boolean'],
+            'channel' => ['required', Rule::in(['video', 'live', 'kartu produk'])],
+            'genderpengikut' => ['required', Rule::in(['laki-laki', 'perempuan', 'seimbang'])],
+            'gmv' => ['required', 'integer', 'min:0'],
+            'itemsterjual' => ['required', 'integer', 'min:0'],
+            'namawa' => ['nullable', 'string', 'max:150'],
+            'nomerwa' => ['nullable', 'string', 'max:150'],
+            'ages' => ['nullable', 'array'],
+            'ages.*' => ['integer', Rule::exists('ages', 'id')],
+            'categories' => ['nullable', 'array', 'max:5'],
+            'categories.*' => ['integer', Rule::exists('categories', 'id')],
+            'contentstyles' => ['nullable', 'array', 'max:9'],
+            'contentstyles.*' => ['integer', Rule::exists('contentstyles', 'id')],
         ];
     }
 
@@ -53,8 +53,8 @@ class UpdateCreatorRequest extends FormRequest
     {
         return [
             'username.required' => 'Username wajib diisi.',
-            'username.unique'   => 'Username sudah digunakan oleh kreator lain.',
-            'categories.max'    => 'Kategori maksimal 5.',
+            'username.unique' => 'Username sudah digunakan oleh kreator lain.',
+            'categories.max' => 'Kategori maksimal 5.',
             'contentstyles.max' => 'Konten style maksimal 9.',
         ];
     }

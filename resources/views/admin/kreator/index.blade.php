@@ -185,6 +185,14 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
+    @if (session('error'))
+        <div class="md-banner md-banner-error">
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:.1rem;">
+                <circle cx="10" cy="10" r="8"/><path d="M10 7v4M10 13.5v.5" stroke-linecap="round"/>
+            </svg>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
 
     {{-- ── Search & Filter ──────────────────────────────────────── --}}
     <form method="GET" action="{{ route('admin.kreator.index') }}">
