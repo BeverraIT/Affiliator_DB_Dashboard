@@ -338,6 +338,26 @@
         .btn-md3-filled.loading .material-symbols-rounded { display: none; }
         .btn-md3-filled.loading .btn-spinner { display: block; }
 
+        /* Remember me */
+        .md-remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0 4px;
+        }
+        .md-remember input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--md-primary);
+            cursor: pointer;
+        }
+        .md-remember label {
+            font-size: 0.8125rem;
+            color: var(--md-on-surface-var);
+            cursor: pointer;
+            user-select: none;
+        }
+
         /* Form footer */
         .form-footer {
             margin-top: 28px;
@@ -471,6 +491,12 @@
                     <button type="button" class="md-field__trailing" id="togglePassword" title="Tampilkan password">
                         <span class="material-symbols-rounded" id="toggleIcon">visibility</span>
                     </button>
+                </div>
+
+                <!-- Remember me -->
+                <div class="md-remember">
+                    <input type="checkbox" name="remember" id="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
+                    <label for="remember">Ingat saya di perangkat ini</label>
                 </div>
 
                 <button type="submit" class="btn-md3-filled" id="submitBtn">
