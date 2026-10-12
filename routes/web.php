@@ -19,10 +19,9 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/logout', 'logout')->name('logout');
 });
 
-// Root: arahkan ke dashboard bila login, jika tidak ke halaman login (hindari 404 di "/").
-Route::get('/', function () {
-    return redirect()->route(auth()->check() ? 'admin.dashboard.index' : 'login');
-});
+// Root: redirect to /dashboard
+Route::redirect('/', '/dashboard');
+Route::redirect('/dashboard', '/admin/dashboard');
 
 
 Route::middleware(['auth'])->group(function () {

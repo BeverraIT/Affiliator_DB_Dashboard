@@ -19,8 +19,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('send_sample', function (Blueprint $table) {
-            $table->index(['status_chat', 'tanggal_aktual'], 'idx_chat_followup');
-            $table->index(['tanggal_aktual', 'estimasi_sampai'], 'idx_pengiriman_followup');
+            $conn = Schema::getConnection();
+            $indexExists = collect($conn->select("SHOW INDEXES FROM send_sample WHERE Key_name = 'idx_chat_followup'"))->isNotEmpty();
+            if (!$indexExists) {
+                $table->index(['status_chat', 'tanggal_aktual'], 'idx_chat_followup');
+            }
+            $index2Exists = collect($conn->select("SHOW INDEXES FROM send_sample WHERE Key_name = 'idx_pengiriman_followup'"))->isNotEmpty();
+            if (!$index2Exists) {
+                $table->index(['tanggal_aktual', 'estimasi_sampai'], 'idx_pengiriman_followup');
+            }
         });
     }
 
