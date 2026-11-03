@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContentStyleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\KoraController;
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
@@ -56,6 +57,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('kirim-sampel.destroy');
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard.index');
+        Route::get('/kora', [KoraController::class, 'index'])
+            ->name('kora.index');
 
 
         Route::get('/follow-up-konten', [FollowUpKontenController::class, 'index'])
