@@ -63,6 +63,23 @@ return [
             ]) : [],
         ],
 
+        // DB milik KORA (creator agent), hanya dibaca oleh halaman /admin/kora. User DB cukup SELECT.
+        'kora' => [
+            'driver' => 'mysql',
+            // "?:" supaya baris KORA_DB_* yang dikosongkan di .env tetap jatuh ke DB_*
+            'host' => env('KORA_DB_HOST') ?: env('DB_HOST', '127.0.0.1'),
+            'port' => env('KORA_DB_PORT') ?: env('DB_PORT', '3306'),
+            'database' => env('KORA_DB_DATABASE') ?: 'creator_agent',
+            'username' => env('KORA_DB_USERNAME') ?: env('DB_USERNAME', 'root'),
+            'password' => env('KORA_DB_USERNAME') ? env('KORA_DB_PASSWORD', '') : env('DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? [PDO::ATTR_TIMEOUT => 5] : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

@@ -2,6 +2,7 @@
     $isDashboard = request()->routeIs('admin.dashboard.*');
     $isKreator   = request()->routeIs('admin.kreator.*');
     $isSampel    = request()->routeIs('admin.kirim-sampel.*');
+    $isKora      = request()->routeIs('admin.kora.*');
     $isFUShip    = request()->routeIs('admin.followup.pengiriman.*');
     $isFUChat    = request()->routeIs('admin.followup.chat.*');
     $isFUKonten  = request()->routeIs('admin.followup_konten.*');
@@ -76,6 +77,17 @@
                     @endif
                 </span>
                 <span class="md-nav-item__label">Kirim Sampel</span>
+            </a>
+        </li>
+
+        <li role="listitem">
+            <a href="{{ route('admin.kora.index') }}"
+               class="md-nav-item{{ $isKora ? ' md-nav-item--active' : '' }}"
+               @if($isKora) aria-current="page" @endif>
+                <span class="md-nav-item__icon" aria-hidden="true">
+                    <i class="bi bi-robot"></i>{{-- bootstrap-icons tidak punya varian -fill untuk robot --}}
+                </span>
+                <span class="md-nav-item__label">KORA</span>
             </a>
         </li>
 
