@@ -33,9 +33,7 @@ class FollowUpPengirimanController extends Controller
             ->needFollowUp();
 
         // Filter PIC
-        if ($user->role !== 'super admin') {
-            $query->byPic($user->id);
-        }
+        $query->visibleTo($user);
 
         // Filter Tanggal
         $query->when($request->start_date, function ($q) use ($request) {

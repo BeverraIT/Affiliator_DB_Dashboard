@@ -27,9 +27,7 @@ class FollowUpKontenController extends Controller
             'user'
         ]);
 
-        if ($user->role !== 'super admin') {
-            $query->byPic($user->id);
-        }
+        $query->visibleTo($user);
 
         if (! empty($skuUtama)) {
             $query->whereHas('product', fn ($sq) => $sq->where('sku_utama', $skuUtama));
