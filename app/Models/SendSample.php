@@ -54,6 +54,30 @@ class SendSample extends Model
         return $query->when($userId, fn ($q) => $q->where('pic', $userId));
     }
 
+    /**
+     * Baris yang boleh dilihat user: super admin semuanya; selain itu baris PIC-nya sendiri
+     * ditambah baris buatan KORA (PIC = akun KORA), supaya hasil kerja KORA terlihat oleh seluruh tim.
+     */
+    public function scopeVisibleTo(Builder $query, $user)
+    {
+        if (! $user || $user->role === 'super admin') {
+            return $query;
+        }
+
+        $kora = config('kora.user_id');
+
+        return $query->where(fn ($q) => $q->where('pic', $user->id)
+            ->when($kora, fn ($w) => $w->orWhere('pic', $kora)));
+    }
+
+    /** Baris ini dibuat KORA (PIC = akun KORA). */
+    public function isKora(): bool
+    {
+        $kora = config('kora.user_id');
+
+        return $kora && (int) $this->pic === (int) $kora;
+    }
+
     public function scopePendingContent(Builder $query)
     {
         return $query->whereNotNull('tanggal_dichat')

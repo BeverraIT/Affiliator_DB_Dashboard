@@ -43,7 +43,7 @@ class KirimSampelController extends Controller
     private function authorizeAccess(SendSample $sendSample): void
     {
         $user = Auth::user();
-        if ($user && $user->role !== 'super admin' && (int) $sendSample->pic !== (int) $user->id) {
+        if ($user && $user->role !== 'super admin' && (int) $sendSample->pic !== (int) $user->id && ! $sendSample->isKora()) {
             abort(403);
         }
     }
@@ -122,10 +122,7 @@ class KirimSampelController extends Controller
 
     private function applyFilters(Builder $query, Request $request): void
     {
-        $user = Auth::user();
-        if ($user && $user->role !== 'super admin') {
-            $query->where('pic', $user->id);
-        }
+        $query->visibleTo(Auth::user());
 
         $query->when($request->start_date, fn ($sq) => $sq->where('tanggal_kirim', '>=', $request->start_date));
         $query->when($request->end_date, fn ($sq) => $sq->where('tanggal_kirim', '<=', $request->end_date));

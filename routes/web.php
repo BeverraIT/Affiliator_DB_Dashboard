@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ContentStyleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KoraController;
+use App\Http\Controllers\Api\KoraApiController;
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
@@ -21,6 +22,13 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 // Root: redirect to /dashboard
+// Pintu masuk KORA (creator agent): dijaga token bearer, bukan sesi login.
+Route::prefix('kora-api')->middleware('kora.token')->name('kora_api.')->group(function () {
+    Route::post('/kreator', [KoraApiController::class, 'kreator'])->name('kreator');
+    Route::post('/kirim-sampel', [KoraApiController::class, 'kirimSampel'])->name('kirim_sampel');
+    Route::patch('/kirim-sampel/{sendSample}', [KoraApiController::class, 'perbaruiKirimSampel'])->name('kirim_sampel.perbarui');
+});
+
 Route::redirect('/', '/dashboard');
 Route::redirect('/dashboard', '/admin/dashboard');
 
