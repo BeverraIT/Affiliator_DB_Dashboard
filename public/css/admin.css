@@ -783,3 +783,11 @@ body {
     opacity: 1;
     pointer-events: auto;
 }
+
+/* Sub menu (KORA › Ringkasan / Kreator Fit, 10 Nov 2026) */
+.md-nav-item--sub {
+    height: calc(var(--md-nav-item-height) - 12px);
+    padding-left: calc(var(--md-nav-lead-pad) + 20px);
+    font-size: 13px;
+}
+.md-nav-item--sub .md-nav-item__icon { font-size: .9em; }

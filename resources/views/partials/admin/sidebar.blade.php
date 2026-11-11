@@ -3,6 +3,7 @@
     $isKreator   = request()->routeIs('admin.kreator.*');
     $isSampel    = request()->routeIs('admin.kirim-sampel.*');
     $isKora      = request()->routeIs('admin.kora.*');
+    $isKoraFit   = request()->routeIs('admin.kora.fit');
     $isFUShip    = request()->routeIs('admin.followup.pengiriman.*');
     $isFUChat    = request()->routeIs('admin.followup.chat.*');
     $isFUKonten  = request()->routeIs('admin.followup_konten.*');
@@ -82,12 +83,30 @@
 
         <li role="listitem">
             <a href="{{ route('admin.kora.index') }}"
-               class="md-nav-item{{ $isKora ? ' md-nav-item--active' : '' }}"
-               @if($isKora) aria-current="page" @endif>
+               class="md-nav-item"
+               @if($isKora) aria-expanded="true" @endif>
                 <span class="md-nav-item__icon" aria-hidden="true">
                     <i class="bi bi-robot"></i>{{-- bootstrap-icons tidak punya varian -fill untuk robot --}}
                 </span>
                 <span class="md-nav-item__label">KORA</span>
+            </a>
+        </li>
+
+        {{-- Sub menu KORA (10 Nov) --}}
+        <li role="listitem">
+            <a href="{{ route('admin.kora.index') }}"
+               class="md-nav-item md-nav-item--sub{{ $isKora && !$isKoraFit ? ' md-nav-item--active' : '' }}"
+               @if($isKora && !$isKoraFit) aria-current="page" @endif>
+                <span class="md-nav-item__icon" aria-hidden="true"><i class="bi bi-speedometer2"></i></span>
+                <span class="md-nav-item__label">Ringkasan</span>
+            </a>
+        </li>
+        <li role="listitem">
+            <a href="{{ route('admin.kora.fit') }}"
+               class="md-nav-item md-nav-item--sub{{ $isKoraFit ? ' md-nav-item--active' : '' }}"
+               @if($isKoraFit) aria-current="page" @endif>
+                <span class="md-nav-item__icon" aria-hidden="true"><i class="bi bi-bullseye"></i></span>
+                <span class="md-nav-item__label">Kreator Fit</span>
             </a>
         </li>
 

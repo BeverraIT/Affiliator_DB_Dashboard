@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ContentStyleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KoraController;
+use App\Http\Controllers\Admin\KoraFitController;
 use App\Http\Controllers\Api\KoraApiController;
 
 Route::controller(AuthController::class)->group(function () {
@@ -67,6 +68,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('dashboard.index');
         Route::get('/kora', [KoraController::class, 'index'])
             ->name('kora.index');
+        Route::get('/kora/kreator-fit', [KoraFitController::class, 'index'])
+            ->name('kora.fit');
 
 
         Route::get('/follow-up-konten', [FollowUpKontenController::class, 'index'])
