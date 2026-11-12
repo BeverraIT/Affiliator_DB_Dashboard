@@ -370,6 +370,9 @@ class KirimSampelController extends Controller
             if ($import->skipped > 0) {
                 $msg .= " {$import->skipped} baris dilewati karena toko/kreator/SKU/PIC tidak cocok.";
             }
+            if ($import->duplicates > 0) {
+                $msg .= " {$import->duplicates} baris dilewati karena sudah ada (kreator + produk + tanggal deal, atau ID pesanan sama).";
+            }
 
             return back()->with('success', $msg);
         } catch (\Exception $e) {

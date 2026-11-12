@@ -4,6 +4,13 @@
 
 @push('styles')
 <style>
+/* ─── Header tabel yang bisa diurutkan ───────────────────────── */
+.th-sort { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.th-sort:hover { color: var(--md-primary, #1a56db); }
+.th-sort-panah { font-size: .65rem; opacity: .45; }
+.th-sort.aktif { color: var(--md-primary, #1a56db); }
+.th-sort.aktif .th-sort-panah { opacity: 1; }
+
 /* ─── MD3 Design Tokens ─────────────────────────────────────── */
 
 /* ─── Type Scale ─────────────────────────────────────────────── */
@@ -348,12 +355,25 @@
                                 <input class="form-check-input" type="checkbox" id="checkAll">
                             </div>
                         </th>
-                        <th style="width:160px;">Kreator</th>
-                        <th style="width:130px; text-align:right;">GMV</th>
-                        <th style="width:70px; text-align:right;">Item</th>
-                        <th style="width:130px;">Umur</th>
-                        <th style="width:200px;">Kategori</th>
-                        <th style="width:180px;">Konten Style</th>
+                        @php
+                            // Header bisa diklik: klik pertama A-Z / kecil-besar, klik lagi dibalik. Filter & pencarian ikut terbawa.
+                            $thSort = function (string $kolom, string $label) use ($sort, $dir) {
+                                $aktif = $sort === $kolom;
+                                $arah = ($aktif && $dir === 'asc') ? 'desc' : 'asc';
+                                $url = request()->fullUrlWithQuery(['sort' => $kolom, 'dir' => $arah, 'page' => null]);
+                                $panah = $aktif ? ($dir === 'asc' ? '&#9650;' : '&#9660;') : '&#8597;';
+
+                                return '<a href="'.e($url).'" class="th-sort'.($aktif ? ' aktif' : '').'" title="Urutkan menurut '.e($label).'">'
+                                    .e($label).'<span class="th-sort-panah">'.$panah.'</span></a>';
+                            };
+                        @endphp
+                        <th style="width:160px;">{!! $thSort('username', 'Kreator') !!}</th>
+                        <th style="width:130px; text-align:right;">{!! $thSort('gmv', 'GMV') !!}</th>
+                        <th style="width:70px; text-align:right;">{!! $thSort('itemsterjual', 'Item') !!}</th>
+                        <th style="width:130px;">{!! $thSort('umur', 'Umur') !!}</th>
+                        <th style="width:200px;">{!! $thSort('kategori', 'Kategori') !!}</th>
+                        <th style="width:180px;">{!! $thSort('konten_style', 'Konten Style') !!}</th>
+                        <th style="width:120px;">{!! $thSort('created_at', 'Tgl Input') !!}</th>
                         <th style="width:110px; text-align:center;">Aksi</th>
                     </tr>
                 </thead>
@@ -482,6 +502,16 @@
                                     <span style="color: var(--md-on-surface-var); font-size:.75rem;">—</span>
                                 @endforelse
                             </div>
+                        </td>
+
+                        {{-- TANGGAL INPUT --}}
+                        <td style="white-space:nowrap; font-size:.8125rem;">
+                            @if($creator->created_at)
+                                <div>{{ $creator->created_at->format('d/m/Y') }}</div>
+                                <div style="color: var(--md-on-surface-var); font-size:.75rem;">{{ $creator->created_at->format('H:i') }}</div>
+                            @else
+                                <span style="color: var(--md-on-surface-var); font-size:.75rem;">—</span>
+                            @endif
                         </td>
 
                         {{-- AKSI --}}

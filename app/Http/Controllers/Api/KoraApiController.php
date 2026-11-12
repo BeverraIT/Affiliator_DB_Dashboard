@@ -32,6 +32,8 @@ class KoraApiController extends Controller
         // Aturan form kreator, minus "unik": kreator yang sudah ada dikembalikan apa adanya.
         $aturan = Arr::except((new StoreCreatorRequest())->rules(), ['username', 'top_creator']);
         $aturan['username'] = ['required', 'string', 'max:150', 'regex:/^[a-z0-9._]+$/'];
+        // Form mewajibkan kategori; API tetap menerima tanpa kategori supaya KORA versi lama tidak tertolak.
+        $aturan['categories'] = ['nullable', 'array', 'max:5'];
 
         $v = Validator::make($input, $aturan);
         if ($v->fails()) {

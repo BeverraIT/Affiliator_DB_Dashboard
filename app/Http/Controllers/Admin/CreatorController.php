@@ -52,7 +52,7 @@ class CreatorController extends Controller
 
         [$sort, $dir] = $this->resolveSort(
             $request,
-            ['id', 'username', 'gmv', 'itemsterjual', 'channel', 'genderpengikut'],
+            ['id', 'username', 'gmv', 'itemsterjual', 'channel', 'genderpengikut', 'created_at', 'umur', 'kategori', 'konten_style'],
             'id',
             'desc'
         );
@@ -93,8 +93,25 @@ class CreatorController extends Controller
 
         $query->when($filterNoWa, fn ($sq) => $sq->whereNull('nomerwa'));
 
+        // Kolom relasi (banyak nilai per kreator) diurutkan menurut nama pertama secara abjad;
+        // kreator tanpa nilai selalu di bawah.
+        $relasiSort = [
+            'umur' => ['ages', 'age_creator', 'age_id'],
+            'kategori' => ['categories', 'category_creator', 'category_id'],
+            'konten_style' => ['contentstyles', 'content_style_creator', 'content_style_id'],
+        ];
+        if (isset($relasiSort[$sort])) {
+            [$tabel, $pivot, $fk] = $relasiSort[$sort];
+            $pertama = "(select min({$tabel}.name) from {$tabel} inner join {$pivot} on {$pivot}.{$fk} = {$tabel}.id"
+                ." where {$pivot}.creator_id = creators.id)";
+            $query->orderByRaw("{$pertama} is null")
+                ->orderByRaw("{$pertama} {$dir}")
+                ->orderBy('creators.id', 'desc');
+        } else {
+            $query->orderBy($sort, $dir)->orderBy('creators.id', 'desc');
+        }
+
         $creators = $query->search($q)
-            ->orderBy($sort, $dir)
             ->paginate(10)
             ->withQueryString();
 
@@ -253,7 +270,12 @@ class CreatorController extends Controller
 
             $msg = "Berhasil import {$import->imported} kreator.";
             if ($import->skipped > 0) {
-                $msg .= " {$import->skipped} dilewati (username sudah ada).";
+                $rincian = array_filter([
+                    $import->duplicates ? "{$import->duplicates} username sudah ada" : null,
+                    $import->withoutCategory ? "{$import->withoutCategory} tanpa kategori" : null,
+                    $import->invalid ? "{$import->invalid} channel/gender tidak dikenal" : null,
+                ]);
+                $msg .= " {$import->skipped} dilewati (".implode(', ', $rincian).').';
             }
 
             return back()->with('success', $msg);
@@ -274,7 +296,7 @@ class CreatorController extends Controller
 
     public function downloadTemplate()
     {
-        $headers = ['username', 'channel', 'gmv', 'itemsterjual', 'genderpengikut', 'namawa', 'nomerwa', 'kategori', 'umur', 'konten_style'];
+        $headers = ['username', 'channel', 'gmv', 'itemsterjual', 'genderpengikut', 'namawa', 'nomerwa', 'kategori', 'umur', 'konten_style', 'tanggal_input'];
 
         return Excel::download(new TemplateExport($headers), 'Template_Kreator.xlsx');
     }
