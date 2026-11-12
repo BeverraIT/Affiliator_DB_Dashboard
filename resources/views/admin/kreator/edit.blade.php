@@ -246,7 +246,7 @@
         <div class="surf-card p-4 mb-3">
             <div class="ks-section-title">Kategori</div>
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="ks-field-label mb-0">Pilih Kategori</label>
+                <label class="ks-field-label mb-0">Pilih Kategori <span style="color: var(--md-error);">*</span></label>
                 <span class="ts-body-sm" style="color: var(--md-on-surface-var);">Maksimal 5</span>
             </div>
             <select name="categories[]" class="form-select select2" multiple="multiple"

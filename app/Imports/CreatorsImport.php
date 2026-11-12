@@ -6,6 +6,7 @@ use App\Models\Age;
 use App\Models\Category;
 use App\Models\ContentStyle;
 use App\Models\Creator;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -13,6 +14,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Row;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, WithHeadingRow, WithValidation
 {
@@ -29,6 +31,13 @@ class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, Wit
     public int $imported = 0;
 
     public int $skipped = 0;
+
+    /** Rincian alasan baris dilewati (untuk pesan ke pengguna). */
+    public int $duplicates = 0;
+
+    public int $withoutCategory = 0;
+
+    public int $invalid = 0;
 
     public function __construct()
     {
@@ -57,6 +66,15 @@ class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, Wit
         // Lewati duplikat tanpa query per baris.
         if ($username === '' || $this->existing->has($username)) {
             $this->skipped++;
+            $this->duplicates++;
+
+            return;
+        }
+
+        // Kategori wajib (sama dengan form Tambah Kreator).
+        if (trim((string) ($row['kategori'] ?? ''), ' ,') === '') {
+            $this->skipped++;
+            $this->withoutCategory++;
 
             return;
         }
@@ -65,11 +83,12 @@ class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, Wit
         if (! in_array($channel, ['video', 'live', 'kartu produk'], true)
             || ! in_array($gender, ['perempuan', 'laki-laki', 'seimbang'], true)) {
             $this->skipped++;
+            $this->invalid++;
 
             return;
         }
 
-        $creator = Creator::create([
+        $creator = new Creator([
             'username' => $username,
             'channel' => $channel,
             'gmv' => $row['gmv'],
@@ -79,6 +98,12 @@ class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, Wit
             'nomerwa' => $row['nomerwa'] ?? null,
             'user_id' => auth()->id(),
         ]);
+        // Kolom opsional tanggal_input: tanggal & waktu kreator sebenarnya diinput/disetujui.
+        // Kosong atau tak terbaca -> waktu upload (bawaan).
+        if ($tanggal = $this->parseTanggal($row['tanggal_input'] ?? null)) {
+            $creator->created_at = $tanggal;
+        }
+        $creator->save();
 
         $this->existing->put($username, true);
         $this->imported++;
@@ -113,6 +138,24 @@ class CreatorsImport implements OnEachRow, SkipsEmptyRows, WithChunkReading, Wit
         }
 
         $creator->{$relation}()->sync($ids);
+    }
+
+    /** Serial Excel atau teks tanggal ("2026-11-12 10:30") -> Carbon; tak terbaca -> null. */
+    private function parseTanggal($nilai): ?Carbon
+    {
+        if ($nilai === null || $nilai === '') {
+            return null;
+        }
+        try {
+            $tanggal = is_numeric($nilai)
+                ? Carbon::instance(Date::excelToDateTimeObject((float) $nilai))
+                : Carbon::parse((string) $nilai);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        // Tanggal mustahil (sebelum 2020 / di masa depan) diabaikan, bukan disimpan.
+        return ($tanggal->year < 2020 || $tanggal->isAfter(now()->addDay())) ? null : $tanggal;
     }
 
     public function rules(): array

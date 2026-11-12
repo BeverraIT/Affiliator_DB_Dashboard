@@ -42,7 +42,7 @@ class UpdateCreatorRequest extends FormRequest
             'nomerwa' => ['nullable', 'string', 'max:150'],
             'ages' => ['nullable', 'array'],
             'ages.*' => ['integer', Rule::exists('ages', 'id')],
-            'categories' => ['nullable', 'array', 'max:5'],
+            'categories' => ['required', 'array', 'min:1', 'max:5'],
             'categories.*' => ['integer', Rule::exists('categories', 'id')],
             'contentstyles' => ['nullable', 'array', 'max:9'],
             'contentstyles.*' => ['integer', Rule::exists('contentstyles', 'id')],
@@ -54,6 +54,8 @@ class UpdateCreatorRequest extends FormRequest
         return [
             'username.required' => 'Username wajib diisi.',
             'username.unique' => 'Username sudah digunakan oleh kreator lain.',
+            'categories.required' => 'Kategori wajib dipilih (minimal 1).',
+            'categories.min' => 'Kategori wajib dipilih (minimal 1).',
             'categories.max' => 'Kategori maksimal 5.',
             'contentstyles.max' => 'Konten style maksimal 9.',
         ];
