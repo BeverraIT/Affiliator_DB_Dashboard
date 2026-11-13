@@ -150,3 +150,24 @@ test('user biasa melihat baris KORA di daftar kirim sampel, tapi tidak baris PIC
     expect($id)->toContain($koraRow)->not->toContain($lain);
     expect(App\Models\SendSample::query()->visibleTo((new App\Models\User())->forceFill(['id' => 1, 'role' => 'super admin']))->count())->toBe(2);
 });
+
+test('KORA mengisi konten style kreator buatannya yang masih kosong, tanpa menimpa isian tim', function () {
+    DB::table('contentstyles')->insert([['id' => 3, 'name' => 'Goyang Produk + VO'], ['id' => 5, 'name' => 'Review Produk + VO']]);
+    $kid = koraApi('POST', '/kora-api/kreator', kreatorKora())->json('id');
+
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [5]])->assertOk()->assertJson(['updated' => true]);
+    $this->assertDatabaseHas('content_style_creator', ['creator_id' => $kid, 'content_style_id' => 5]);
+
+    // sudah terisi -> tidak ditimpa
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [3]])->assertOk()->assertJson(['updated' => false]);
+    $this->assertDatabaseMissing('content_style_creator', ['creator_id' => $kid, 'content_style_id' => 3]);
+
+    // id tidak dikenal / kosong ditolak
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [999]])->assertStatus(422);
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => []])->assertStatus(422);
+
+    // kreator tim tidak boleh disentuh
+    $tim = DB::table('creators')->insertGetId(['user_id' => 5, 'username' => 'kreatortim', 'channel' => 'video', 'genderpengikut' => 'perempuan']);
+    koraApi('PATCH', "/kora-api/kreator/{$tim}/konten-style", ['contentstyles' => [5]])->assertStatus(403);
+    $this->assertDatabaseMissing('content_style_creator', ['creator_id' => $tim]);
+});

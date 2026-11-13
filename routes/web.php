@@ -26,6 +26,7 @@ Route::controller(AuthController::class)->group(function () {
 // Pintu masuk KORA (creator agent): dijaga token bearer, bukan sesi login.
 Route::prefix('kora-api')->middleware('kora.token')->name('kora_api.')->group(function () {
     Route::post('/kreator', [KoraApiController::class, 'kreator'])->name('kreator');
+    Route::patch('/kreator/{creator}/konten-style', [KoraApiController::class, 'kontenStyleKreator'])->name('kreator.konten_style');
     Route::post('/kirim-sampel', [KoraApiController::class, 'kirimSampel'])->name('kirim_sampel');
     Route::patch('/kirim-sampel/{sendSample}', [KoraApiController::class, 'perbaruiKirimSampel'])->name('kirim_sampel.perbarui');
 });

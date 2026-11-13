@@ -62,6 +62,31 @@ class KoraApiController extends Controller
         return response()->json(['id' => $creator->id, 'created' => true, 'is_blocked' => false], 201);
     }
 
+    /**
+     * Isi konten style kreator buatan KORA yang masih kosong (hasil KORA menonton 3 video kreator).
+     * Kreator tim tidak disentuh; konten style yang sudah diisi (oleh tim atau sebelumnya) tidak ditimpa.
+     */
+    public function kontenStyleKreator(Request $request, Creator $creator): JsonResponse
+    {
+        if ((int) $creator->user_id !== (int) config('kora.user_id')) {
+            return response()->json(['message' => 'Kreator ini bukan buatan KORA.'], 403);
+        }
+
+        $aturan = Arr::only((new StoreCreatorRequest())->rules(), ['contentstyles', 'contentstyles.*']);
+        $aturan['contentstyles'] = ['required', 'array', 'min:1', 'max:9'];
+        $v = Validator::make($request->all(), $aturan);
+        if ($v->fails()) {
+            return response()->json(['message' => 'Data konten style tidak valid.', 'errors' => $v->errors()], 422);
+        }
+
+        if ($creator->contentStyles()->exists()) {
+            return response()->json(['id' => $creator->id, 'updated' => false]);
+        }
+        $creator->contentStyles()->sync(array_values(array_unique($v->validated()['contentstyles'])));
+
+        return response()->json(['id' => $creator->id, 'updated' => true]);
+    }
+
     /** Buat baris Kirim Sampel atas nama KORA. Kreator+produk+tanggal deal yang sama dikembalikan, tidak digandakan. */
     public function kirimSampel(Request $request): JsonResponse
     {
