@@ -171,3 +171,22 @@ test('KORA mengisi konten style kreator buatannya yang masih kosong, tanpa menim
     koraApi('PATCH', "/kora-api/kreator/{$tim}/konten-style", ['contentstyles' => [5]])->assertStatus(403);
     $this->assertDatabaseMissing('content_style_creator', ['creator_id' => $tim]);
 });
+
+test('KORA boleh mengganti tebakannya sendiri selama belum diedit tim', function () {
+    DB::table('contentstyles')->insert([['id' => 3, 'name' => 'Goyang Produk + VO'], ['id' => 5, 'name' => 'Review Produk + VO'],
+                                        ['id' => 7, 'name' => 'Menampilkan Wajah + Text']]);
+    $kid = koraApi('POST', '/kora-api/kreator', kreatorKora())->json('id');
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [5]])->assertJson(['updated' => true]);
+
+    // isi lama masih sama dengan kiriman KORA -> diganti jadi 2 style
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [5, 7], 'sebelumnya' => [5]])
+        ->assertOk()->assertJson(['updated' => true]);
+    expect(DB::table('content_style_creator')->where('creator_id', $kid)->pluck('content_style_id')->sort()->values()->all())->toBe([5, 7]);
+
+    // tim mengedit (hapus 7, tambah 3) -> KORA tidak boleh menimpa
+    DB::table('content_style_creator')->where('creator_id', $kid)->where('content_style_id', 7)->delete();
+    DB::table('content_style_creator')->insert(['creator_id' => $kid, 'content_style_id' => 3]);
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/konten-style", ['contentstyles' => [7], 'sebelumnya' => [5, 7]])
+        ->assertOk()->assertJson(['updated' => false]);
+    expect(DB::table('content_style_creator')->where('creator_id', $kid)->pluck('content_style_id')->sort()->values()->all())->toBe([3, 5]);
+});

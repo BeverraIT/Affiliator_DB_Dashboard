@@ -64,7 +64,8 @@ class KoraApiController extends Controller
 
     /**
      * Isi konten style kreator buatan KORA yang masih kosong (hasil KORA menonton 3 video kreator).
-     * Kreator tim tidak disentuh; konten style yang sudah diisi (oleh tim atau sebelumnya) tidak ditimpa.
+     * Kreator tim tidak disentuh; konten style yang sudah diisi tidak ditimpa, kecuali KORA menyebut isi lamanya
+     * (`sebelumnya`) dan isi sekarang masih persis sama = belum diedit tim, jadi tebakan KORA sendiri boleh diganti.
      */
     public function kontenStyleKreator(Request $request, Creator $creator): JsonResponse
     {
@@ -74,15 +75,22 @@ class KoraApiController extends Controller
 
         $aturan = Arr::only((new StoreCreatorRequest())->rules(), ['contentstyles', 'contentstyles.*']);
         $aturan['contentstyles'] = ['required', 'array', 'min:1', 'max:9'];
+        $aturan['sebelumnya'] = ['sometimes', 'array', 'max:9'];
+        $aturan['sebelumnya.*'] = ['integer'];
         $v = Validator::make($request->all(), $aturan);
         if ($v->fails()) {
             return response()->json(['message' => 'Data konten style tidak valid.', 'errors' => $v->errors()], 422);
         }
+        $data = $v->validated();
 
-        if ($creator->contentStyles()->exists()) {
-            return response()->json(['id' => $creator->id, 'updated' => false]);
+        $sekarang = $creator->contentStyles()->pluck('contentstyles.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+        if ($sekarang) {
+            $lama = collect($data['sebelumnya'] ?? [])->map(fn ($id) => (int) $id)->unique()->sort()->values()->all();
+            if (! $lama || $lama !== $sekarang) {
+                return response()->json(['id' => $creator->id, 'updated' => false]);
+            }
         }
-        $creator->contentStyles()->sync(array_values(array_unique($v->validated()['contentstyles'])));
+        $creator->contentStyles()->sync(array_values(array_unique($data['contentstyles'])));
 
         return response()->json(['id' => $creator->id, 'updated' => true]);
     }
