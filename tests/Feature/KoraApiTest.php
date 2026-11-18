@@ -190,3 +190,26 @@ test('KORA boleh mengganti tebakannya sendiri selama belum diedit tim', function
         ->assertOk()->assertJson(['updated' => false]);
     expect(DB::table('content_style_creator')->where('creator_id', $kid)->pluck('content_style_id')->sort()->values()->all())->toBe([3, 5]);
 });
+
+test('KORA mengisi nomor WA kreator yang masih kosong, tidak menimpa isian tim', function () {
+    $kid = koraApi('POST', '/kora-api/kreator', kreatorKora())->json('id');
+
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/wa", ['nomerwa' => '085267657600'])
+        ->assertOk()->assertJson(['updated' => true, 'nomerwa' => '085267657600']);
+    $this->assertDatabaseHas('creators', ['id' => $kid, 'nomerwa' => '085267657600']);
+
+    // sudah terisi -> tidak ditimpa
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/wa", ['nomerwa' => '081111111111'])
+        ->assertOk()->assertJson(['updated' => false, 'nomerwa' => '085267657600']);
+
+    // kreator tim: nomor kosong boleh diisi, nomor yang sudah ada tidak disentuh
+    $kosong = DB::table('creators')->insertGetId(['user_id' => 5, 'username' => 'timkosong', 'channel' => 'video', 'genderpengikut' => 'perempuan']);
+    koraApi('PATCH', "/kora-api/kreator/{$kosong}/wa", ['nomerwa' => '081234567890'])->assertJson(['updated' => true]);
+    $isi = DB::table('creators')->insertGetId(['user_id' => 5, 'username' => 'timisi', 'channel' => 'video', 'genderpengikut' => 'perempuan', 'nomerwa' => '0899']);
+    koraApi('PATCH', "/kora-api/kreator/{$isi}/wa", ['nomerwa' => '081234567890'])->assertJson(['updated' => false]);
+    $this->assertDatabaseHas('creators', ['id' => $isi, 'nomerwa' => '0899']);
+
+    // bukan nomor -> ditolak
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/wa", ['nomerwa' => 'hubungi aku'])->assertStatus(422);
+    koraApi('PATCH', "/kora-api/kreator/{$kid}/wa", [])->assertStatus(422);
+});

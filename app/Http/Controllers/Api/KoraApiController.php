@@ -95,6 +95,35 @@ class KoraApiController extends Controller
         return response()->json(['id' => $creator->id, 'updated' => true]);
     }
 
+    /**
+     * Isi nomor WA kreator yang dikirim kreator di chat TikTok (setelah KORA meminta no WA).
+     * Hanya mengisi yang masih kosong: nomor / nama WA yang sudah ada (diisi tim) tidak pernah ditimpa.
+     */
+    public function waKreator(Request $request, Creator $creator): JsonResponse
+    {
+        $v = Validator::make($request->all(), [
+            'nomerwa' => ['required', 'string', 'max:150', 'regex:/^[0-9+ ]{8,20}$/'],
+            'namawa' => ['sometimes', 'nullable', 'string', 'max:150'],
+        ]);
+        if ($v->fails()) {
+            return response()->json(['message' => 'Data WA tidak valid.', 'errors' => $v->errors()], 422);
+        }
+        $data = $v->validated();
+
+        $ubah = [];
+        if (blank($creator->nomerwa)) {
+            $ubah['nomerwa'] = $data['nomerwa'];
+        }
+        if (! blank($data['namawa'] ?? null) && blank($creator->namawa)) {
+            $ubah['namawa'] = $data['namawa'];
+        }
+        if ($ubah) {
+            $creator->update($ubah);
+        }
+
+        return response()->json(['id' => $creator->id, 'updated' => (bool) $ubah, 'nomerwa' => $creator->nomerwa]);
+    }
+
     /** Buat baris Kirim Sampel atas nama KORA. Kreator+produk+tanggal deal yang sama dikembalikan, tidak digandakan. */
     public function kirimSampel(Request $request): JsonResponse
     {
