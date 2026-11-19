@@ -124,7 +124,8 @@ class KoraApiController extends Controller
         return response()->json(['id' => $creator->id, 'updated' => (bool) $ubah, 'nomerwa' => $creator->nomerwa]);
     }
 
-    /** Buat baris Kirim Sampel atas nama KORA. Kreator+produk+tanggal deal yang sama dikembalikan, tidak digandakan. */
+    /** Buat baris Kirim Sampel atas nama KORA. Kreator+toko+produk+tanggal deal yang sama dikembalikan, tidak digandakan.
+     *  Toko ikut dicek: produk (SKU) yang sama bisa dijual di beberapa toko, dan tiap toko mengirim sampelnya sendiri. */
     public function kirimSampel(Request $request): JsonResponse
     {
         $aturan = Arr::except((new StoreSendSampleRequest())->rules(), ['pic', 'approve']);
@@ -138,6 +139,7 @@ class KoraApiController extends Controller
         $data = $v->validated();
 
         $ada = SendSample::where('creator_id', $data['creator_id'])
+            ->where('store_id', $data['store_id'])
             ->where('product_id', $data['product_id'])
             ->whereDate('deal_date', $data['deal_date'])
             ->first();

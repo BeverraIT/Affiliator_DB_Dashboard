@@ -120,6 +120,17 @@ test('kirim sampel yang sama dua kali tidak membuat baris ganda', function () {
     expect(DB::table('send_sample')->count())->toBe(1);
 });
 
+test('produk sama dari toko lain tetap dibuat sebagai baris sendiri', function () {
+    DB::table('stores')->insert(['id' => 1, 'name' => 'YARRA STORE']);
+    $kid = koraApi('POST', '/kora-api/kreator', kreatorKora())->json('id');
+    $yarra = koraApi('POST', '/kora-api/kirim-sampel', sampelKora($kid, ['store_id' => 1]))->assertStatus(201)->json('id');
+    $minzo = koraApi('POST', '/kora-api/kirim-sampel', sampelKora($kid, ['store_id' => 4]));
+
+    $minzo->assertStatus(201)->assertJson(['created' => true]);
+    expect($minzo->json('id'))->not->toBe($yarra);
+    expect(DB::table('send_sample')->count())->toBe(2);
+});
+
 test('tanggal kirim sebelum tanggal deal ditolak', function () {
     $kid = koraApi('POST', '/kora-api/kreator', kreatorKora())->json('id');
     koraApi('POST', '/kora-api/kirim-sampel', sampelKora($kid, ['tanggal_kirim' => '2026-11-01']))->assertStatus(422);
