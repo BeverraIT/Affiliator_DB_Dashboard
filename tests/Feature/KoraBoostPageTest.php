@@ -47,7 +47,8 @@ function stubKoraBoost(): void
             return ['total' => 1, 'baris' => [(object) ['username' => 'mnasrulloh7', 'store_slug' => 'yarra', 'sku' => 'T01-BSCR',
                 'product_title' => 'Topi Bucket', 'status' => 'deal', 'request_state' => 'deal_tunggu_approve',
                 'diundang_at' => '2026-11-24 14:25:00', 'mengajukan_at' => '2026-11-25 08:06:41', 'acc_at' => null,
-                'video' => 0, 'gmv' => 0, 'orders' => 0, 'gmv_sebelum' => 2390000]]];
+                'video' => 0, 'gmv' => 0, 'orders' => 0, 'gmv_sebelum' => 2390000,
+                'ket' => 'Nego: menunggu kreator', 'produk_lain' => 'Yarra Brush Make Up (BRS1-2 BROWN)']]];
         }
     });
 }
@@ -68,6 +69,8 @@ test('halaman boost menampilkan target video, corong, produk, dan kreator', func
         ->assertSee('@mnasrulloh7')
         ->assertSee('https://www.tiktok.com/@mnasrulloh7', false)
         ->assertSee('DEAL, tunggu approve')
+        ->assertSee('Nego: menunggu kreator')
+        ->assertSee('Mengajukan produk lain: Yarra Brush Make Up (BRS1-2 BROWN)')
         ->assertSee(route('admin.kora.boost'), false);
 });
 

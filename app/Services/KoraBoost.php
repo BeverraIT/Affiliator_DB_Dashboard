@@ -190,6 +190,52 @@ class KoraBoost
         $baris = $this->db()->select("SELECT * FROM boost_kreator WHERE {$where}
             ORDER BY {$urut}, diundang_at DESC, gmv_sebelum DESC LIMIT ? OFFSET ?",
             array_merge($p, [$perPage, ($page - 1) * $perPage]));
+        $this->tambahKeterangan($baris);
         return ['total' => $total, 'baris' => $baris];
+    }
+
+    public const KETERANGAN = [
+        'ditolak_tim'            => 'Ditolak tim (NO)',
+        'ditolak'                => 'Gagal screening',
+        'blacklist'              => 'Blacklist',
+        'kedaluwarsa'            => 'Kedaluwarsa, tidak diproses',
+        'batal'                  => 'Dibatalkan',
+        'menunggu_tim'           => 'Menunggu keputusan tim',
+        'siap_negosiasi'         => 'Siap negosiasi',
+        'nego_menunggu_tim'      => 'Nego: menunggu tim',
+        'nego_menunggu_kreator'  => 'Nego: menunggu kreator',
+        'ditangani_tim'          => 'Diproses tim',
+        'diproses_di_luar_agent' => 'Diproses tim di luar KORA',
+    ];
+
+    /**
+     * Keterangan di bawah status: alasan dari state pengajuan, dan produk yang diajukan kalau berbeda dari produk
+     * yang di-boost (dibaca dari sample_requests.products). ->ket (string|null), ->produk_lain (string|null).
+     */
+    private function tambahKeterangan(array $baris): void
+    {
+        $ids = array_values(array_filter(array_map(fn ($r) => $r->request_id ?? null, $baris)));
+        $req = [];
+        if ($ids) {
+            $tanda = implode(',', array_fill(0, count($ids), '?'));
+            foreach ($this->db()->select("SELECT id, products FROM sample_requests WHERE id IN ({$tanda})", $ids) as $r) {
+                $req[$r->id] = json_decode((string) $r->products, true) ?: [];
+            }
+        }
+        foreach ($baris as $r) {
+            $r->ket = self::KETERANGAN[$r->request_state ?? ''] ?? null;
+            $r->produk_lain = null;
+            $produk = $req[$r->request_id ?? 0] ?? [];
+            if ($produk && $r->product_id) {
+                $ids = array_map(fn ($p) => (string) ($p['product_id'] ?? ''), $produk);
+                if (!in_array((string) $r->product_id, $ids, true)) {
+                    $p = $produk[0];
+                    $nama = trim(($p['sku_desc'] ?? '') !== '' ? $p['sku_desc'] : ($p['product_title'] ?? ''));
+                    $judul = \Illuminate\Support\Str::limit((string) ($p['product_title'] ?? ''), 40);
+                    $r->produk_lain = trim($judul . ($nama && $nama !== ($p['product_title'] ?? '') ? " ({$nama})" : ''))
+                        . (count($produk) > 1 ? ' +' . (count($produk) - 1) : '');
+                }
+            }
+        }
     }
 }
