@@ -22,8 +22,26 @@
     <style>
         .target-bar { height: 10px; background: var(--md-primary-container); border-radius: 6px; overflow: hidden; margin-top: .6rem; }
         .target-bar i { display: block; height: 100%; background: var(--md-primary); border-radius: 6px; }
+        .boost-memuat { color: var(--md-primary); font-weight: 600; }
+        .memuat .boost-daftar { opacity: .4; pointer-events: none; transition: opacity .15s; }
         .kora-filter input[type=search] { border: 1.5px solid var(--md-outline-var); border-radius: 8px; padding: .3rem .6rem; font-size: .8125rem; background: #fff; }
     </style>
+@endpush
+
+@push('scripts')
+<script>
+    // Ganti filter memuat ulang halaman: tandai daftar lama supaya tidak dikira hasil filter.
+    document.querySelectorAll('.kora-filter').forEach(function (f) {
+        f.addEventListener('submit', function () {
+            document.body.classList.add('memuat');
+            document.querySelectorAll('.boost-memuat').forEach(function (e) { e.hidden = false; });
+        });
+        f.querySelectorAll('select').forEach(function (s) {
+            s.addEventListener('change', function () { document.body.classList.add('memuat');
+                document.querySelectorAll('.boost-memuat').forEach(function (e) { e.hidden = false; }); });
+        });
+    });
+</script>
 @endpush
 
 @section('content')
@@ -182,9 +200,13 @@
                     @endforeach
                 </select>
                 <input type="search" name="cari" value="{{ $filter['cari'] }}" placeholder="Cari @kreator" aria-label="Cari kreator">
+                @if(array_filter($filter))
+                    <a class="kora-chip" href="{{ route('admin.kora.boost', ['kampanye' => $k->kode]) }}">Reset filter</a>
+                @endif
+                <span class="boost-memuat ts-body-sm" role="status" aria-live="polite" hidden>Memuat…</span>
             </form>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive boost-daftar">
         <table class="kora-table">
             <thead><tr><th>Kreator</th><th>Toko</th><th>Produk di-boost</th><th>Status</th><th>Diundang</th>
                 <th>Mengajukan</th><th>ACC</th><th class="num">Video</th><th class="num">Hasil (GMV)</th><th class="num">Order</th></tr></thead>
