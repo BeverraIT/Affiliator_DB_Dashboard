@@ -35,9 +35,50 @@ class KoraBoost
         return DB::connection('kora');
     }
 
-    private function ingat(string $nama, \Closure $fn)
+    private function ingat(string $nama, \Closure $fn, int $detik = 300)
     {
-        return Cache::remember('kora-boost:' . $nama, 300, $fn);      // KORA memperbarui tiap 30 menit
+        return Cache::remember('kora-boost:' . $nama, $detik, $fn);
+    }
+
+    /**
+     * Semua sampel produk boost sejak kampanye mulai, per product_id. Membaca view v_kinerja_sampel (±4 detik),
+     * jadi satu query saja dan di-cache 30 menit (= jadwal sinkron KORA). -> [product_id => {sampel, video, laku, gmv}]
+     */
+    private function sampelProduk(object $k): array
+    {
+        return $this->ingat('sampel:' . $k->kode, function () use ($k) {
+            $hasil = [];
+            foreach ($this->db()->select("SELECT product_id, COUNT(*) AS sampel, COALESCE(SUM(dibuat),0) AS video,
+                    COALESCE(SUM(video_laku > 0),0) AS laku, COALESCE(SUM(gmv_sejak_mulai),0) AS gmv
+                FROM v_kinerja_sampel WHERE approved_at >= ? GROUP BY product_id", [$k->mulai]) as $r) {
+                $hasil[(string) $r->product_id] = $r;
+            }
+            return $hasil;
+        }, 1800);
+    }
+
+    /** [sku => [product_id, ...]] produk boost ('' = belum terpetakan). */
+    private function petaProduk(object $k): array
+    {
+        $peta = [];
+        foreach ($this->db()->select('SELECT sku, product_id FROM boost_produk WHERE boost = ?', [$k->kode]) as $r) {
+            $peta[$r->sku][] = (string) $r->product_id;
+        }
+        return $peta;
+    }
+
+    /** Jumlahkan sampel untuk sekumpulan product_id. */
+    private function jumlahSampel(array $pids, array $sampel): object
+    {
+        $t = ['sampel' => 0, 'video' => 0, 'laku' => 0, 'gmv' => 0.0];
+        foreach (array_unique($pids) as $pid) {
+            if ($pid !== '' && isset($sampel[$pid])) {
+                foreach ($t as $kunci => $v) {
+                    $t[$kunci] = $v + $sampel[$pid]->$kunci;
+                }
+            }
+        }
+        return (object) $t;
     }
 
     /** Kampanye, terbaru dulu. */
@@ -71,14 +112,8 @@ class KoraBoost
                 COALESCE(SUM(video),0) AS video, COALESCE(SUM(gmv),0) AS gmv, COALESCE(SUM(orders),0) AS orders,
                 MAX(updated_at) AS diperbarui FROM boost_kreator WHERE boost = ?', [$k->kode]);
 
-            $target = null;
-            $ada = (int) $this->db()->selectOne("SELECT COUNT(*) AS n FROM boost_produk WHERE boost = ? AND product_id <> ''", [$k->kode])->n;
-            if ($ada) {
-                $target = $this->db()->selectOne("SELECT COUNT(*) AS sampel, COALESCE(SUM(dibuat),0) AS video,
-                    COALESCE(SUM(video_laku > 0),0) AS laku, COALESCE(SUM(gmv_sejak_mulai),0) AS gmv
-                    FROM v_kinerja_sampel WHERE approved_at >= ? AND product_id IN
-                      (SELECT product_id FROM boost_produk WHERE boost = ? AND product_id <> '')", [$k->mulai, $k->kode]);
-            }
+            $pids = array_filter(array_merge([], ...array_values($this->petaProduk($k))), fn ($p) => $p !== '');
+            $target = $pids ? $this->jumlahSampel($pids, $this->sampelProduk($k)) : null;
             return ['status' => $status, 'corong' => $corong, 'total' => $total, 'target' => $target];
         });
     }
@@ -96,11 +131,11 @@ class KoraBoost
                     COALESCE(SUM(video),0) AS video, COALESCE(SUM(gmv),0) AS gmv
                 FROM boost_kreator WHERE boost = ? GROUP BY COALESCE(sku, product_title, '-')", [$k->kode]);
             $semua = [];
-            foreach ($this->db()->select("SELECT p.sku, COUNT(v.approval_id) AS sampel, COALESCE(SUM(v.dibuat),0) AS video,
-                    MAX(p.product_id = '') AS belum_peta
-                FROM boost_produk p LEFT JOIN v_kinerja_sampel v ON v.product_id = p.product_id AND v.approved_at >= ?
-                WHERE p.boost = ? GROUP BY p.sku", [$k->mulai, $k->kode]) as $r) {
-                $semua[$r->sku] = $r;
+            $sampel = null;
+            foreach ($this->petaProduk($k) as $sku => $pids) {
+                $sampel ??= $this->sampelProduk($k);
+                $semua[$sku] = $this->jumlahSampel($pids, $sampel);
+                $semua[$sku]->belum_peta = in_array('', $pids, true);
             }
             $hasil = [];
             foreach ($baris as $r) {
