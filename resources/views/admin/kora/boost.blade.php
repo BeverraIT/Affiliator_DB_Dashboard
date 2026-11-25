@@ -196,7 +196,9 @@
                         @if($r->gmv_sebelum)<div class="ts-body-sm" style="color:var(--md-on-surface-var);" title="Penjualan produk ini sebelum diundang">sebelumnya {{ $rp($r->gmv_sebelum) }}</div>@endif</td>
                     <td>{{ $daftarToko[$r->store_slug] ?? $r->store_slug }}</td>
                     <td><strong>{{ $r->sku ?? '' }}</strong>@if($r->product_title)<div class="produk-judul ts-body-sm" title="{{ $r->product_title }}">{{ $r->product_title }}</div>@endif</td>
-                    <td><span class="kora-badge {{ $cls }}" @if($r->request_state) title="{{ $r->request_state }}" @endif>{{ $lbl }}</span></td>
+                    <td><span class="kora-badge {{ $cls }}" @if($r->request_state) title="{{ $r->request_state }}" @endif>{{ $lbl }}</span>
+                        @if(!empty($r->ket) && $r->ket !== $lbl)<div class="ts-body-sm" style="color:var(--md-on-surface-var);">{{ $r->ket }}</div>@endif
+                        @if(!empty($r->produk_lain))<div class="ts-body-sm produk-judul" style="color:#8A4B00;" title="{{ $r->produk_lain }}">Mengajukan produk lain: {{ $r->produk_lain }}</div>@endif</td>
                     <td class="ts-body-sm">{{ $tgl($r->diundang_at, 'D MMM, HH.mm') }}</td>
                     <td class="ts-body-sm">{{ $tgl($r->mengajukan_at) }}</td>
                     <td class="ts-body-sm">{{ $tgl($r->acc_at) }}</td>
